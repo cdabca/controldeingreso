@@ -3,1329 +3,605 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Control de Ingreso CDA - Recepción</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/signature_pad/4.1.7/signature_pad.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <title>Dashboard CDA - Consulta y Facturación</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            padding: 20px;
-            min-height: 100vh;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 10px 50px rgba(0,0,0,0.3);
-            overflow: hidden;
-        }
-
-        .header {
-            background: #2c3e50;
-            color: white;
-            padding: 25px;
-            text-align: center;
-            position: relative;
-        }
-
-        .header h1 {
-            font-size: 24px;
-            margin-bottom: 8px;
-        }
-
-        .header p {
-            font-size: 14px;
-            opacity: 0.9;
-        }
-
-        .nav-links {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-        }
-
-        .nav-links a {
-            color: white;
-            text-decoration: none;
-            padding: 10px 20px;
-            background: rgba(255,255,255,0.2);
-            border-radius: 5px;
-            font-weight: 600;
-            transition: all 0.3s;
-        }
-
-        .nav-links a:hover {
-            background: rgba(255,255,255,0.3);
-        }
-
-        .csv-uploader {
-            background: #3498db;
-            color: white;
-            padding: 20px;
-            margin: 20px;
-            border-radius: 10px;
-            text-align: center;
-        }
-
-        .csv-uploader input[type="file"] {
-            display: none;
-        }
-
-        .csv-uploader label {
-            display: inline-block;
-            padding: 12px 30px;
-            background: white;
-            color: #3498db;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.3s;
-        }
-
-        .csv-uploader label:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-        }
-
-        .csv-status {
-            margin-top: 15px;
-            font-weight: 600;
-        }
-
-        .form-content {
-            padding: 30px;
-        }
-
-        .section {
-            margin-bottom: 30px;
-            border: 2px solid #ecf0f1;
-            border-radius: 10px;
-            padding: 20px;
-            background: #f8f9fa;
-        }
-
-        .section-title {
-            background: #3498db;
-            color: white;
-            padding: 12px 20px;
-            margin: -20px -20px 20px -20px;
-            border-radius: 8px 8px 0 0;
-            font-weight: bold;
-            font-size: 16px;
-        }
-
-        .form-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-        }
-
-        .form-group {
-            display: flex;
-            flex-direction: column;
-            position: relative;
-        }
-
-        .form-group label {
-            font-weight: 600;
-            margin-bottom: 8px;
-            color: #2c3e50;
-            font-size: 14px;
-        }
-
-        .form-group input,
-        .form-group select {
-            padding: 12px;
-            border: 2px solid #dfe6e9;
-            border-radius: 8px;
-            font-size: 14px;
-            transition: all 0.3s;
-        }
-
-        .form-group input:focus,
-        .form-group select:focus {
-            outline: none;
-            border-color: #3498db;
-            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
-        }
-
-        .autocomplete-badge {
-            position: absolute;
-            top: 8px;
-            right: 10px;
-            background: #27ae60;
-            color: white;
-            padding: 4px 10px;
-            border-radius: 12px;
-            font-size: 11px;
-            font-weight: 600;
-        }
-
-        .radio-group {
-            display: flex;
-            gap: 20px;
-            flex-wrap: wrap;
-        }
-
-        .radio-option {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .radio-option input[type="radio"] {
-            width: 20px;
-            height: 20px;
-            cursor: pointer;
-        }
-
-        .checkbox-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-        }
-
-        .checkbox-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 10px;
-            background: white;
-            border-radius: 6px;
-            border: 2px solid #ecf0f1;
-        }
-
-        .checkbox-item input[type="checkbox"] {
-            width: 22px;
-            height: 22px;
-            cursor: pointer;
-        }
-
-        .inspection-table {
-            width: 100%;
-            border-collapse: collapse;
-            background: white;
-            border-radius: 8px;
-            overflow: hidden;
-        }
-
-        .inspection-table th {
-            background: #34495e;
-            color: white;
-            padding: 12px;
-            text-align: left;
-            font-size: 14px;
-        }
-
-        .inspection-table td {
-            padding: 12px;
-            border-bottom: 1px solid #ecf0f1;
-        }
-
-        .inspection-table tr:hover {
-            background: #f8f9fa;
-        }
-
-        .inspection-table input[type="radio"] {
-            width: 20px;
-            height: 20px;
-            cursor: pointer;
-        }
-
-        .signature-container {
-            background: white;
-            border: 3px dashed #3498db;
-            border-radius: 10px;
-            padding: 15px;
-            text-align: center;
-        }
-
-        #signature-pad {
-            border: 2px solid #bdc3c7;
-            border-radius: 8px;
-            cursor: crosshair;
-            touch-action: none;
-        }
-
-        .signature-buttons {
-            margin-top: 15px;
-            display: flex;
-            gap: 10px;
-            justify-content: center;
-        }
-
-        .btn {
-            padding: 12px 30px;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-        }
-
-        .btn-clear {
-            background: #e74c3c;
-            color: white;
-        }
-
-        .btn-clear:hover {
-            background: #c0392b;
-            transform: translateY(-2px);
-        }
-
-        .btn-save {
-            background: #27ae60;
-            color: white;
-        }
-
-        .btn-save:hover {
-            background: #229954;
-            transform: translateY(-2px);
-        }
-
-        .btn-pdf {
-            background: #e67e22;
-            color: white;
-        }
-
-        .btn-pdf:hover {
-            background: #d35400;
-            transform: translateY(-2px);
-        }
-
-        .conditions-box {
-            background: #fff3cd;
-            border: 2px solid #ffc107;
-            border-radius: 8px;
-            padding: 20px;
-            margin: 20px 0;
-        }
-
-        .conditions-box h3 {
-            color: #856404;
-            margin-bottom: 15px;
-            font-size: 16px;
-        }
-
-        .conditions-box ul {
-            margin-left: 20px;
-            color: #856404;
-            line-height: 1.8;
-        }
-
-        .accept-checkbox {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-top: 15px;
-            padding: 15px;
-            background: white;
-            border-radius: 8px;
-        }
-
-        .accept-checkbox input[type="checkbox"] {
-            width: 25px;
-            height: 25px;
-            cursor: pointer;
-        }
-
-        .action-buttons {
-            display: flex;
-            gap: 15px;
-            justify-content: center;
-            margin-top: 30px;
-            flex-wrap: wrap;
-        }
-
-        .alert {
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            font-weight: 600;
-        }
-
-        .alert-success {
-            background: #d4edda;
-            color: #155724;
-            border: 2px solid #c3e6cb;
-        }
-
-        .alert-error {
-            background: #f8d7da;
-            color: #721c24;
-            border: 2px solid #f5c6cb;
-        }
-
-        .alert-info {
-            background: #d1ecf1;
-            color: #0c5460;
-            border: 2px solid #bee5eb;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); padding: 20px; min-height: 100vh; }
+        .container { max-width: 1400px; margin: 0 auto; background: white; border-radius: 15px; box-shadow: 0 10px 50px rgba(0,0,0,0.3); overflow: hidden; }
+        .header { background: #2c3e50; color: white; padding: 25px; text-align: center; position: relative; }
+        .header h1 { font-size: 28px; margin-bottom: 8px; }
+        .header p { font-size: 14px; opacity: 0.9; }
+        .nav-links { position: absolute; top: 20px; right: 20px; }
+        .nav-links a { color: white; text-decoration: none; padding: 10px 20px; background: rgba(255,255,255,0.2); border-radius: 5px; font-weight: 600; transition: all 0.3s; }
+        .nav-links a:hover { background: rgba(255,255,255,0.3); }
+        .dashboard-content { padding: 30px; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .stat-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 25px; border-radius: 12px; box-shadow: 0 5px 20px rgba(0,0,0,0.2); text-align: center; }
+        .stat-card h3 { font-size: 16px; margin-bottom: 10px; opacity: 0.9; }
+        .stat-card .stat-number { font-size: 42px; font-weight: bold; margin: 10px 0; }
+        .filters-section { background: #f8f9fa; padding: 25px; border-radius: 12px; margin-bottom: 30px; border: 2px solid #e9ecef; }
+        .filters-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        .filter-group { display: flex; flex-direction: column; }
+        .filter-group label { font-weight: 600; margin-bottom: 8px; color: #2c3e50; font-size: 14px; }
+        .filter-group input, .filter-group select { padding: 10px; border: 2px solid #dfe6e9; border-radius: 8px; font-size: 14px; }
+        .filter-group input:focus, .filter-group select:focus { outline: none; border-color: #3498db; }
+        .filter-buttons { display: flex; gap: 10px; flex-wrap: wrap; }
+        .btn { padding: 12px 25px; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+        .btn-search { background: #3498db; color: white; }
+        .btn-search:hover { background: #2980b9; transform: translateY(-2px); }
+        .btn-reset { background: #95a5a6; color: white; }
+        .btn-reset:hover { background: #7f8c8d; transform: translateY(-2px); }
+        .btn-export { background: #27ae60; color: white; }
+        .btn-export:hover { background: #229954; transform: translateY(-2px); }
+        .records-table-container { background: white; border-radius: 12px; overflow-x: auto; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .records-table { width: 100%; border-collapse: collapse; min-width: 1000px; }
+        .records-table thead { background: #34495e; color: white; }
+        .records-table th { padding: 15px; text-align: left; font-weight: 600; font-size: 13px; position: sticky; top: 0; background: #34495e; z-index: 10; }
+        .records-table td { padding: 12px 15px; border-bottom: 1px solid #ecf0f1; font-size: 13px; }
+        .records-table tbody tr:hover { background: #f8f9fa; cursor: pointer; }
+        .badge { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+        .badge-si { background: #d4edda; color: #155724; }
+        .badge-no { background: #f8d7da; color: #721c24; }
+        .badge-auto { background: #cce5ff; color: #004085; }
+        .badge-moto { background: #fff3cd; color: #856404; }
+        .no-records { text-align: center; padding: 50px; color: #7f8c8d; font-size: 18px; }
+        .alert { padding: 15px; border-radius: 8px; margin-bottom: 20px; font-weight: 600; }
+        .alert-info { background: #d1ecf1; color: #0c5460; border: 2px solid #bee5eb; }
+        .alert-success { background: #d4edda; color: #155724; border: 2px solid #c3e6cb; }
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); overflow-y: auto; }
+        .modal-content { background: white; margin: 50px auto; padding: 30px; border-radius: 12px; max-width: 900px; box-shadow: 0 10px 50px rgba(0,0,0,0.5); }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 3px solid #3498db; }
+        .modal-header h2 { color: #2c3e50; }
+        .close-btn { font-size: 32px; font-weight: bold; color: #7f8c8d; cursor: pointer; transition: color 0.3s; }
+        .close-btn:hover { color: #2c3e50; }
+        .detail-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 25px; }
+        .detail-item { background: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 4px solid #3498db; }
+        .detail-item label { font-weight: 600; color: #7f8c8d; font-size: 12px; display: block; margin-bottom: 5px; }
+        .detail-item .value { color: #2c3e50; font-size: 16px; font-weight: 600; }
+        .signature-preview { text-align: center; margin-top: 25px; padding: 20px; background: #f8f9fa; border-radius: 8px; }
+        .signature-preview img { max-width: 400px; border: 2px solid #2c3e50; border-radius: 8px; padding: 10px; background: white; }
         @media (max-width: 768px) {
-            .form-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .checkbox-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .action-buttons {
-                flex-direction: column;
-            }
-
-            .btn {
-                width: 100%;
-            }
-
-            .nav-links {
-                position: static;
-                margin-top: 15px;
-            }
-        }
-
-        #pdf-preview {
-            position: absolute;
-            left: -9999px;
-            background: white;
-            padding: 40px;
-            width: 800px;
-        }
-
-        #pdf-preview .pdf-header {
-            text-align: center;
-            margin-bottom: 30px;
-            border-bottom: 3px solid #2c3e50;
-            padding-bottom: 20px;
-        }
-
-        #pdf-preview .pdf-section {
-            margin-bottom: 25px;
-        }
-
-        #pdf-preview .pdf-section-title {
-            background: #34495e;
-            color: white;
-            padding: 10px;
-            font-weight: bold;
-            margin-bottom: 15px;
-        }
-
-        #pdf-preview .pdf-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 15px;
-            margin-bottom: 15px;
-        }
-
-        #pdf-preview .pdf-field {
-            border: 1px solid #ddd;
-            padding: 8px;
-            font-size: 12px;
-        }
-
-        #pdf-preview .pdf-field strong {
-            display: block;
-            color: #2c3e50;
-            margin-bottom: 5px;
-        }
-
-        #pdf-preview .signature-img {
-            max-width: 300px;
-            border: 2px solid #000;
-            padding: 10px;
+            .stats-grid { grid-template-columns: 1fr; }
+            .filters-grid { grid-template-columns: 1fr; }
+            .filter-buttons { flex-direction: column; }
+            .btn { width: 100%; }
+            .modal-content { margin: 20px; padding: 20px; }
+            .nav-links { position: static; margin-top: 15px; }
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>🚗 CDA BARRANCABERMEJA</h1>
-            <p>RECEPCIÓN DE VEHÍCULOS LIVIANOS Y MOTOCICLETAS</p>
-            <p style="font-size: 12px; margin-top: 10px;">CDABR-GST-F-04 | VER 14 | 2024-04-01</p>
+            <h1>📊 Dashboard CDA - Consulta y Facturación</h1>
+            <p>Sistema de consulta de registros de recepción</p>
             <div class="nav-links">
-                <a href="dashboard.html" target="_blank">📊 Ver Dashboard</a>
+                <a href="index.html">🔙 Volver a Recepción</a>
             </div>
         </div>
 
-        <!-- CSV Uploader -->
-        <div class="csv-uploader">
-            <h3>📂 Base de Datos de Vehículos</h3>
-            <p style="margin: 10px 0;">Cargue el archivo CSV con los datos históricos de vehículos</p>
-            <input type="file" id="csv-upload" accept=".csv" />
-            <label for="csv-upload">📤 Cargar archivo CSV</label>
-            <div class="csv-status" id="csv-status">
-                ⏳ No se ha cargado ningún archivo
-            </div>
-        </div>
-
-        <div class="form-content">
+        <div class="dashboard-content">
             <div id="alert-container"></div>
 
-            <!-- Sección 1: Datos Básicos -->
-            <div class="section">
-                <div class="section-title">📋 DATOS BÁSICOS DE RECEPCIÓN</div>
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label>Fecha</label>
-                        <input type="date" id="fecha" required>
+            <!-- Estadísticas -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h3>📝 Total de Registros</h3>
+                    <div class="stat-number" id="stat-total">0</div>
+                </div>
+                <div class="stat-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                    <h3>📅 Registros Hoy</h3>
+                    <div class="stat-number" id="stat-today">0</div>
+                </div>
+                <div class="stat-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                    <h3>🚗 Vehículos Únicos</h3>
+                    <div class="stat-number" id="stat-unique">0</div>
+                </div>
+                <div class="stat-card" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
+                    <h3>✅ Vehículos Preparados</h3>
+                    <div class="stat-number" id="stat-prepared">0</div>
+                </div>
+            </div>
+
+            <!-- Filtros -->
+            <div class="filters-section">
+                <h3 style="margin-bottom: 20px; color: #2c3e50;">🔍 Filtros de Búsqueda</h3>
+                <div class="filters-grid">
+                    <div class="filter-group">
+                        <label>Placa</label>
+                        <input type="text" id="filter-placa" placeholder="Ej: ABC123">
                     </div>
-                    <div class="form-group">
-                        <label>Hora</label>
-                        <input type="time" id="hora" required>
+                    <div class="filter-group">
+                        <label>Fecha Desde</label>
+                        <input type="date" id="filter-fecha-desde">
                     </div>
-                    <div class="form-group">
-                        <label>Placa *</label>
-                        <input type="text" id="placa" placeholder="Ej: ABC123" required style="text-transform: uppercase;">
-                        <small style="color: #7f8c8d; margin-top: 5px;">Ingrese la placa para buscar datos existentes</small>
+                    <div class="filter-group">
+                        <label>Fecha Hasta</label>
+                        <input type="date" id="filter-fecha-hasta">
                     </div>
-                    <div class="form-group">
+                    <div class="filter-group">
                         <label>Turno</label>
-                        <input type="text" id="turno" placeholder="Ej: 18 18-1" required>
+                        <input type="text" id="filter-turno" placeholder="Ej: 18 18-1">
+                    </div>
+                    <div class="filter-group">
+                        <label>Clase de Vehículo</label>
+                        <select id="filter-clase">
+                            <option value="">Todos</option>
+                            <option value="auto">Auto</option>
+                            <option value="camioneta">Camioneta</option>
+                            <option value="campero">Campero</option>
+                            <option value="moto">Moto 4T</option>
+                            <option value="otro">Otro</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label>Vehículo Preparado</label>
+                        <select id="filter-preparado">
+                            <option value="">Todos</option>
+                            <option value="si">Sí</option>
+                            <option value="no">No</option>
+                        </select>
                     </div>
                 </div>
-
-                <div style="margin-top: 20px;">
-                    <label style="font-weight: 600; margin-bottom: 10px; display: block;">Visita</label>
-                    <div class="radio-group">
-                        <div class="radio-option">
-                            <input type="radio" id="visita1" name="visita" value="1" checked>
-                            <label for="visita1">1ª Visita</label>
-                        </div>
-                        <div class="radio-option">
-                            <input type="radio" id="visita2" name="visita" value="2">
-                            <label for="visita2">2ª Visita</label>
-                        </div>
-                    </div>
+                <div class="filter-buttons">
+                    <button class="btn btn-search" onclick="applyFilters()">🔍 Buscar</button>
+                    <button class="btn btn-reset" onclick="resetFilters()">🔄 Limpiar Filtros</button>
+                    <button class="btn btn-export" onclick="exportToExcel()">📊 Exportar a Excel</button>
                 </div>
 
-                <div style="margin-top: 20px;">
-                    <label style="font-weight: 600; margin-bottom: 10px; display: block;">Vehículo Preparado</label>
-                    <div class="radio-group">
-                        <div class="radio-option">
-                            <input type="radio" id="prep-si" name="preparado" value="si" checked>
-                            <label for="prep-si">Sí</label>
-                        </div>
-                        <div class="radio-option">
-                            <input type="radio" id="prep-no" name="preparado" value="no">
-                            <label for="prep-no">No</label>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Sección 2: Datos del Vehículo -->
-            <div class="section">
-                <div class="section-title">🚙 DATOS DEL VEHÍCULO</div>
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label>Marca</label>
-                        <input type="text" id="marca" placeholder="Ej: Toyota, Chevrolet">
-                        <span class="autocomplete-badge" id="badge-marca" style="display:none;">✓ Auto</span>
-                    </div>
-                    <div class="form-group">
-                        <label>Color</label>
-                        <input type="text" id="color" placeholder="Ej: Blanco, Negro">
-                        <span class="autocomplete-badge" id="badge-color" style="display:none;">✓ Auto</span>
-                    </div>
-                    <div class="form-group">
-                        <label>Número de Sillas</label>
-                        <input type="number" id="num-sillas" placeholder="Ej: 5">
-                        <span class="autocomplete-badge" id="badge-sillas" style="display:none;">✓ Auto</span>
-                    </div>
-                </div>
-
-                <div style="margin-top: 20px;">
-                    <label style="font-weight: 600; margin-bottom: 10px; display: block;">Clase de Vehículo</label>
-                    <div class="radio-group">
-                        <div class="radio-option">
-                            <input type="radio" id="clase-auto" name="clase" value="auto" checked>
-                            <label for="clase-auto">Auto</label>
-                        </div>
-                        <div class="radio-option">
-                            <input type="radio" id="clase-camioneta" name="clase" value="camioneta">
-                            <label for="clase-camioneta">Camioneta</label>
-                        </div>
-                        <div class="radio-option">
-                            <input type="radio" id="clase-campero" name="clase" value="campero">
-                            <label for="clase-campero">Campero</label>
-                        </div>
-                        <div class="radio-option">
-                            <input type="radio" id="clase-moto" name="clase" value="moto">
-                            <label for="clase-moto">Moto 4T</label>
-                        </div>
-                        <div class="radio-option">
-                            <input type="radio" id="clase-otro" name="clase" value="otro">
-                            <label for="clase-otro">Otro</label>
-                        </div>
-                    </div>
-                </div>
-
-                <div style="margin-top: 20px;">
-                    <label style="font-weight: 600; margin-bottom: 10px; display: block;">Tipo de Servicio</label>
-                    <div class="radio-group">
-                        <div class="radio-option">
-                            <input type="radio" id="servicio-particular" name="servicio" value="particular" checked>
-                            <label for="servicio-particular">Particular</label>
-                        </div>
-                        <div class="radio-option">
-                            <input type="radio" id="servicio-oficial" name="servicio" value="oficial">
-                            <label for="servicio-oficial">Oficial</label>
-                        </div>
-                        <div class="radio-option">
-                            <input type="radio" id="servicio-publico" name="servicio" value="publico">
-                            <label for="servicio-publico">Público</label>
-                        </div>
-                        <div class="radio-option">
-                            <input type="radio" id="servicio-otro" name="servicio" value="otro">
-                            <label for="servicio-otro">Otro</label>
-                        </div>
-                    </div>
-                </div>
-
-                <div style="margin-top: 20px;">
-                    <label style="font-weight: 600; margin-bottom: 10px; display: block;">Tipo de Combustible</label>
-                    <div class="radio-group">
-                        <div class="radio-option">
-                            <input type="radio" id="comb-gasolina" name="combustible" value="gasolina" checked>
-                            <label for="comb-gasolina">Gasolina</label>
-                        </div>
-                        <div class="radio-option">
-                            <input type="radio" id="comb-gas" name="combustible" value="gas">
-                            <label for="comb-gas">Gas</label>
-                        </div>
-                        <div class="radio-option">
-                            <input type="radio" id="comb-diesel" name="combustible" value="diesel">
-                            <label for="comb-diesel">Diesel</label>
-                        </div>
-                        <div class="radio-option">
-                            <input type="radio" id="comb-electrico" name="combustible" value="electrico">
-                            <label for="comb-electrico">Eléctrico</label>
-                        </div>
-                        <div class="radio-option">
-                            <input type="radio" id="comb-otro" name="combustible" value="otro">
-                            <label for="comb-otro">Otro</label>
-                        </div>
-                    </div>
+                <!-- CSV import UI -->
+                <div style="margin-top:18px; display:flex; gap:10px; align-items:center;">
+                    <input type="file" id="csv-file" accept=".csv,.xlsx,.xls" />
+                    <button class="btn" style="background:#6c5ce7;color:white;" onclick="importCSV()">⬆️ Importar CSV/XLSX</button>
+                    <small style="color:#7f8c8d;">(Si la plataforma sube el CSV pero no guarda en storage, usa esta importación para probar)</small>
                 </div>
             </div>
 
-            <!-- Sección 3: Pruebas Mecánicas (Solo visible en 2ª visita) -->
-            <div class="section" id="section-pruebas" style="display: none;">
-                <div class="section-title">🔧 PRUEBAS MECÁNICAS A REALIZAR (2ª Visita)</div>
-                <div class="checkbox-grid">
-                    <div class="checkbox-item">
-                        <input type="checkbox" id="prueba-alineacion">
-                        <label for="prueba-alineacion">Alineación</label>
-                    </div>
-                    <div class="checkbox-item">
-                        <input type="checkbox" id="prueba-frenos">
-                        <label for="prueba-frenos">Frenos</label>
-                    </div>
-                    <div class="checkbox-item">
-                        <input type="checkbox" id="prueba-gases">
-                        <label for="prueba-gases">Gases</label>
-                    </div>
-                    <div class="checkbox-item">
-                        <input type="checkbox" id="prueba-suspension">
-                        <label for="prueba-suspension">Suspensión</label>
-                    </div>
-                    <div class="checkbox-item">
-                        <input type="checkbox" id="prueba-luces">
-                        <label for="prueba-luces">Luces</label>
-                    </div>
-                    <div class="checkbox-item">
-                        <input type="checkbox" id="prueba-opacidad">
-                        <label for="prueba-opacidad">Opacidad</label>
-                    </div>
-                </div>
-
-                <div style="margin-top: 20px;">
-                    <label style="font-weight: 600; margin-bottom: 10px; display: block;">¿Vehículo Público Cumple?</label>
-                    <div class="radio-group">
-                        <div class="radio-option">
-                            <input type="radio" id="cumple-si" name="cumple" value="si">
-                            <label for="cumple-si">Sí</label>
-                        </div>
-                        <div class="radio-option">
-                            <input type="radio" id="cumple-no" name="cumple" value="no" checked>
-                            <label for="cumple-no">No</label>
-                        </div>
-                        <div class="radio-option">
-                            <input type="radio" id="cumple-na" name="cumple" value="na">
-                            <label for="cumple-na">N/A</label>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Sección 4: Inspección Visual -->
-            <div class="section">
-                <div class="section-title">👁️ PREPARACIÓN DE LA MUESTRA PARA SER INSPECCIONADO</div>
-                <table class="inspection-table">
+            <!-- Tabla de Registros -->
+            <div class="records-table-container">
+                <table class="records-table">
                     <thead>
                         <tr>
-                            <th>Descripción</th>
-                            <th style="text-align: center; width: 80px;">Sí</th>
-                            <th style="text-align: center; width: 80px;">No</th>
+                            <th>Fecha</th>
+                            <th>Hora</th>
+                            <th>Placa</th>
+                            <th>Turno</th>
+                            <th>Marca</th>
+                            <th>Color</th>
+                            <th>Clase</th>
+                            <th>Preparado</th>
+                            <th>Visita</th>
+                            <th>Acciones</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody id="records-tbody">
                         <tr>
-                            <td>Vehículo descargado (vacío)</td>
-                            <td style="text-align: center;"><input type="radio" name="insp-1" value="si" checked></td>
-                            <td style="text-align: center;"><input type="radio" name="insp-1" value="no"></td>
-                        </tr>
-                        <tr>
-                            <td>Vehículo limpio</td>
-                            <td style="text-align: center;"><input type="radio" name="insp-2" value="si" checked></td>
-                            <td style="text-align: center;"><input type="radio" name="insp-2" value="no"></td>
-                        </tr>
-                        <tr>
-                            <td>Vehículo sin tapas o copas</td>
-                            <td style="text-align: center;"><input type="radio" name="insp-3" value="si" checked></td>
-                            <td style="text-align: center;"><input type="radio" name="insp-3" value="no"></td>
-                        </tr>
-                        <tr>
-                            <td>Alarma desactivada</td>
-                            <td style="text-align: center;"><input type="radio" name="insp-4" value="si" checked></td>
-                            <td style="text-align: center;"><input type="radio" name="insp-4" value="no"></td>
-                        </tr>
-                        <tr>
-                            <td>Licencia de tránsito del vehículo</td>
-                            <td style="text-align: center;"><input type="radio" name="insp-5" value="si" checked></td>
-                            <td style="text-align: center;"><input type="radio" name="insp-5" value="no"></td>
-                        </tr>
-                        <tr>
-                            <td>Certificado de gas natural vigente (vehículos convertidos)</td>
-                            <td style="text-align: center;"><input type="radio" name="insp-6" value="si"></td>
-                            <td style="text-align: center;"><input type="radio" name="insp-6" value="no" checked></td>
-                        </tr>
-                        <tr>
-                            <td>Llanta de repuesto visible</td>
-                            <td style="text-align: center;"><input type="radio" name="insp-7" value="si" checked></td>
-                            <td style="text-align: center;"><input type="radio" name="insp-7" value="no"></td>
-                        </tr>
-                        <tr>
-                            <td>Correcta presión de los neumáticos</td>
-                            <td style="text-align: center;"><input type="radio" name="insp-8" value="si" checked></td>
-                            <td style="text-align: center;"><input type="radio" name="insp-8" value="no"></td>
-                        </tr>
-                        <tr>
-                            <td>Correcto funcionamiento de las luces del vehículo</td>
-                            <td style="text-align: center;"><input type="radio" name="insp-9" value="si" checked></td>
-                            <td style="text-align: center;"><input type="radio" name="insp-9" value="no"></td>
-                        </tr>
-                        <tr>
-                            <td>Vehículo sin candado o carpa suelta (Si Aplica)</td>
-                            <td style="text-align: center;"><input type="radio" name="insp-10" value="si" checked></td>
-                            <td style="text-align: center;"><input type="radio" name="insp-10" value="no"></td>
-                        </tr>
-                        <tr>
-                            <td>Indicador de nivel de líquido de frenos visible (Si Aplica)</td>
-                            <td style="text-align: center;"><input type="radio" name="insp-11" value="si"></td>
-                            <td style="text-align: center;"><input type="radio" name="insp-11" value="no" checked></td>
-                        </tr>
-                        <tr class="moto-only" style="display: none;">
-                            <td>Motocicleta de transmisión automática con soporte central</td>
-                            <td style="text-align: center;"><input type="radio" name="insp-12" value="si"></td>
-                            <td style="text-align: center;"><input type="radio" name="insp-12" value="no" checked></td>
-                        </tr>
-                        <tr class="moto-only" style="display: none;">
-                            <td>Motocicleta con porta casco o maletero vacío (si aplica)</td>
-                            <td style="text-align: center;"><input type="radio" name="insp-13" value="si"></td>
-                            <td style="text-align: center;"><input type="radio" name="insp-13" value="no" checked></td>
-                        </tr>
-                        <tr>
-                            <td>Vehículo Bicombustible operando a gasolina (Si aplica)</td>
-                            <td style="text-align: center;"><input type="radio" name="insp-14" value="si"></td>
-                            <td style="text-align: center;"><input type="radio" name="insp-14" value="no" checked></td>
-                        </tr>
-                        <tr>
-                            <td>Vehículo en modo inspección (Si aplica, híbridos)</td>
-                            <td style="text-align: center;"><input type="radio" name="insp-15" value="si"></td>
-                            <td style="text-align: center;"><input type="radio" name="insp-15" value="no" checked></td>
+                            <td colspan="10" class="no-records">⏳ Cargando registros...</td>
                         </tr>
                     </tbody>
                 </table>
             </div>
-
-            <!-- Sección 5: Condiciones y Firma Única -->
-            <div class="section">
-                <div class="section-title">✍️ ACEPTACIÓN DE CONDICIONES Y FIRMA</div>
-                
-                <div class="conditions-box">
-                    <h3>⚠️ CONDICIONES IMPORTANTES - Seleccione las que aplican</h3>
-                    
-                    <div style="margin-top: 20px;">
-                        <div class="accept-checkbox" style="background: #fff3cd; border: 2px solid #ffc107;">
-                            <input type="checkbox" id="cond-ingreso" required>
-                            <label for="cond-ingreso" style="color: #856404;">
-                                <strong>✅ OBLIGATORIA:</strong> Señor cliente (o usuario), las condiciones al ingresar del vehículo señaladas son ciertas
-                            </label>
-                        </div>
-
-                        <div class="accept-checkbox" style="background: #fff3cd; border: 2px solid #ffc107; margin-top: 10px;">
-                            <input type="checkbox" id="cond-salida" required>
-                            <label for="cond-salida" style="color: #856404;">
-                                <strong>✅ OBLIGATORIA:</strong> Señor cliente, acepta las condiciones en la que salió su vehículo
-                            </label>
-                        </div>
-
-                        <div class="accept-checkbox" style="margin-top: 10px;">
-                            <input type="checkbox" id="cond-comercial">
-                            <label for="cond-comercial">
-                                ⬜ OPCIONAL: Acepto que me contacten para gestión comercial, recordatorios de próximo vencimiento
-                            </label>
-                        </div>
-
-                        <div class="accept-checkbox" style="margin-top: 10px;">
-                            <input type="checkbox" id="cond-datos">
-                            <label for="cond-datos">
-                                ⬜ OPCIONAL: Acepto el tratamiento de mis datos personales según política de privacidad
-                            </label>
-                        </div>
-                    </div>
-
-                    <div style="margin-top: 20px; padding: 15px; background: white; border-radius: 8px; border: 2px solid #3498db;">
-                        <p style="color: #2c3e50; font-size: 13px; line-height: 1.6;">
-                            <strong>Nota adicional:</strong> El Señor Recepcionista deberá registrar las presiones de las llantas del vehículo y el estado en que ingresa usando las convenciones indicadas. Si su vehículo automotor cuenta con sistema de seguridad, por favor desactívelo.
-                        </p>
-                    </div>
-                </div>
-
-                <div style="margin-top: 20px;">
-                    <label style="font-weight: 600; margin-bottom: 10px; display: block; color: #2c3e50;">Firma del Cliente (use dedo o mouse)</label>
-                    <div class="signature-container">
-                        <canvas id="signature-pad" width="600" height="200"></canvas>
-                        <div class="signature-buttons">
-                            <button class="btn btn-clear" onclick="clearSignature()">🗑️ Limpiar Firma</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Botones de Acción -->
-            <div class="action-buttons">
-                <button class="btn btn-save" onclick="saveRecord()">💾 Guardar Registro</button>
-                <button class="btn btn-pdf" onclick="generatePDF()">📄 Generar PDF</button>
-            </div>
         </div>
     </div>
 
-    <!-- PDF Preview (Hidden) -->
-    <div id="pdf-preview">
-        <div class="pdf-header">
-            <h1>CDA BARRANCABERMEJA</h1>
-            <h2>RECEPCIÓN DE VEHÍCULOS LIVIANOS Y MOTOCICLETAS</h2>
-            <p>CDABR-GST-F-04 | VER 14 | 2024-04-01</p>
+    <!-- Modal de Detalle -->
+    <div id="detail-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>📋 Detalle del Registro</h2>
+                <span class="close-btn" onclick="closeModal()">&times;</span>
+            </div>
+            <div id="detail-content"></div>
         </div>
-        <div id="pdf-content"></div>
     </div>
 
     <script>
-        // Global variables
-        let vehiculosDB = [];
-        const canvas = document.getElementById('signature-pad');
-        const signaturePad = new SignaturePad(canvas, {
-            backgroundColor: 'rgb(255, 255, 255)',
-            penColor: 'rgb(0, 0, 0)'
-        });
+        let allRecords = [];
+        let filteredRecords = [];
 
-        // Initialize app
-        window.addEventListener('load', () => {
-            const now = new Date();
-            document.getElementById('fecha').valueAsDate = now;
-            document.getElementById('hora').value = now.toTimeString().slice(0, 5);
-            loadRecordsCount();
-            setupPlacaAutocomplete();
-            setupConditionalLogic();
-        });
+        window.addEventListener('load', () => { loadRecords(); });
 
-        // Setup conditional logic for dynamic sections
-        function setupConditionalLogic() {
-            // Listen to visita change
-            document.querySelectorAll('input[name="visita"]').forEach(radio => {
-                radio.addEventListener('change', togglePruebasSection);
+        // -- Utilities: normalization, safe access
+        function safeBoolean(value) {
+            if (value === undefined || value === null) return false;
+            if (typeof value === 'boolean') return value;
+            const s = String(value).toLowerCase().trim();
+            return s === 'si' || s === 'sí' || s === 'yes' || s === 'true' || s === '1';
+        }
+
+        function normalizeRecord(raw) {
+            // Map common CSV/header variants into internal fields
+            const normalized = {};
+            if (!raw || typeof raw !== 'object') return normalized;
+
+            // Make a map of key -> value with normalized key names (lowercased, no spaces)
+            const map = {};
+            Object.keys(raw).forEach(k => {
+                const key = k.toLowerCase().replace(/\s+/g, '').replace(/[^a-z0-9]/g,'');
+                map[key] = raw[k];
             });
 
-            // Listen to clase change
-            document.querySelectorAll('input[name="clase"]').forEach(radio => {
-                radio.addEventListener('change', toggleMotoFields);
+            normalized.fecha = map['fecha'] || map['date'] || map['fecharegistro'] || '';
+            normalized.hora = map['hora'] || map['time'] || '';
+            normalized.placa = (map['placa'] || map['plate'] || map['placanum'] || '').toString().toUpperCase();
+            normalized.turno = map['turno'] || map['shift'] || '';
+            normalized.marca = map['marca'] || map['brand'] || '';
+            normalized.color = map['color'] || map['col'] || '';
+            normalized.numSillas = map['numsillas'] || map['numdeasientos'] || map['asientos'] || '';
+            normalized.clase = (map['clase'] || map['clasevehiculo'] || map['class'] || '').toLowerCase();
+            normalized.servicio = map['servicio'] || map['service'] || '';
+            normalized.combustible = map['combustible'] || map['fuel'] || '';
+            normalized.preparado = (map['preparado'] || map['prepared'] || '').toString().toLowerCase() || 'no';
+            normalized.visita = map['visita'] || map['visit'] || '1';
+
+            // pruebas may be flattened columns like 'alineacion' or JSON in a 'pruebas' column
+            const pruebas = {};
+            ['alineacion','frenos','gases','suspension','luces','opacidad'].forEach(p => {
+                pruebas[p] = safeBoolean(map[p]) || false;
             });
-
-            // Initial state
-            togglePruebasSection();
-            toggleMotoFields();
-        }
-
-        // Toggle Pruebas section based on visita
-        function togglePruebasSection() {
-            const visita = document.querySelector('input[name="visita"]:checked').value;
-            const pruebasSection = document.getElementById('section-pruebas');
-            
-            if (visita === '2') {
-                pruebasSection.style.display = 'block';
-            } else {
-                pruebasSection.style.display = 'none';
+            // if there's a pruebas JSON string column, try to parse it
+            if (map['pruebas']) {
+                try {
+                    const parsed = typeof map['pruebas'] === 'string' ? JSON.parse(map['pruebas']) : map['pruebas'];
+                    Object.assign(pruebas, parsed);
+                } catch(e) {
+                    // ignore parse errors
+                }
             }
+            normalized.pruebas = pruebas;
+
+            const condiciones = {};
+            condiciones.ingreso = safeBoolean(map['condicionesingreso'] || map['ingreso'] || map['condicioningreso']);
+            condiciones.salida = safeBoolean(map['condicionessalida'] || map['salida']);
+            condiciones.comercial = safeBoolean(map['comercial'] || map['contactocomercial']);
+            condiciones.datos = safeBoolean(map['datos'] || map['tratamientodedatos']);
+            normalized.condiciones = condiciones;
+
+            normalized.cumple = (map['cumple'] || map['vehiculopublicocumple'] || '').toString().toLowerCase();
+            normalized.firma = map['firma'] || map['signature'] || '';
+            // timestamp fallback: try provided, else compose from fecha/hora or Date.now()
+            if (map['timestamp']) normalized.timestamp = Number(map['timestamp']) || Date.now();
+            else if (normalized.fecha || normalized.hora) {
+                const t = new Date((normalized.fecha || '') + ' ' + (normalized.hora || ''));
+                normalized.timestamp = isNaN(t.getTime()) ? Date.now() : t.getTime();
+            } else normalized.timestamp = Date.now();
+
+            return normalized;
         }
 
-        // Toggle moto-specific fields
-        function toggleMotoFields() {
-            const clase = document.querySelector('input[name="clase"]:checked').value;
-            const motoRows = document.querySelectorAll('.moto-only');
-            
-            motoRows.forEach(row => {
-                if (clase === 'moto') {
-                    row.style.display = 'table-row';
-                } else {
-                    row.style.display = 'none';
-                }
-            });
-        }
-
-        // CSV Upload Handler
-        document.getElementById('csv-upload').addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-
-            Papa.parse(file, {
-                header: true,
-                skipEmptyLines: true,
-                complete: function(results) {
-                    vehiculosDB = results.data;
-                    document.getElementById('csv-status').innerHTML = 
-                        `✅ ${vehiculosDB.length} vehículos cargados correctamente`;
-                    document.getElementById('csv-status').style.color = '#27ae60';
-                    showAlert(`✅ Base de datos cargada: ${vehiculosDB.length} vehículos`, 'success');
-                },
-                error: function(error) {
-                    showAlert('❌ Error al cargar el archivo CSV: ' + error.message, 'error');
-                }
-            });
-        });
-
-        // Setup Placa Autocomplete
-        function setupPlacaAutocomplete() {
-            const placaInput = document.getElementById('placa');
-            placaInput.addEventListener('input', function(e) {
-                const placa = e.target.value.toUpperCase().trim();
-                
-                if (placa.length >= 3) {
-                    searchVehiculo(placa);
-                }
-            });
-
-            placaInput.addEventListener('blur', function(e) {
-                const placa = e.target.value.toUpperCase().trim();
-                if (placa.length >= 3) {
-                    searchVehiculo(placa);
-                }
-            });
-        }
-
-        // Search Vehicle in Database
-        function searchVehiculo(placa) {
-            const vehiculo = vehiculosDB.find(v => 
-                v.Placa && v.Placa.toUpperCase() === placa
-            );
-
-            if (vehiculo) {
-                // Fill form with data
-                if (vehiculo.Marca) {
-                    document.getElementById('marca').value = vehiculo.Marca;
-                    showBadge('badge-marca');
-                }
-                if (vehiculo.Color) {
-                    document.getElementById('color').value = vehiculo.Color;
-                    showBadge('badge-color');
-                }
-                if (vehiculo.NumSillas) {
-                    document.getElementById('num-sillas').value = vehiculo.NumSillas;
-                    showBadge('badge-sillas');
-                }
-                
-                // Set radio buttons
-                if (vehiculo.Clase) {
-                    const claseRadio = document.getElementById(`clase-${vehiculo.Clase.toLowerCase()}`);
-                    if (claseRadio) claseRadio.checked = true;
-                }
-                if (vehiculo.Servicio) {
-                    const servicioRadio = document.getElementById(`servicio-${vehiculo.Servicio.toLowerCase()}`);
-                    if (servicioRadio) servicioRadio.checked = true;
-                }
-                if (vehiculo.Combustible) {
-                    const combRadio = document.getElementById(`comb-${vehiculo.Combustible.toLowerCase()}`);
-                    if (combRadio) combRadio.checked = true;
-                }
-
-                showAlert(`✅ Datos cargados automáticamente para ${placa}`, 'info');
-            } else {
-                // Clear badges if vehicle not found
-                hideBadge('badge-marca');
-                hideBadge('badge-color');
-                hideBadge('badge-sillas');
-            }
-        }
-
-        // Show/Hide badges
-        function showBadge(badgeId) {
-            const badge = document.getElementById(badgeId);
-            if (badge) badge.style.display = 'block';
-        }
-
-        function hideBadge(badgeId) {
-            const badge = document.getElementById(badgeId);
-            if (badge) badge.style.display = 'none';
-        }
-
-        // Clear signature
-        function clearSignature() {
-            signaturePad.clear();
-        }
-
-        // Show alert
-        function showAlert(message, type) {
-            const container = document.getElementById('alert-container');
-            const alert = document.createElement('div');
-            alert.className = `alert alert-${type}`;
-            alert.textContent = message;
-            container.appendChild(alert);
-            
-            setTimeout(() => {
-                alert.remove();
-            }, 5000);
-        }
-
-        // Collect form data
-        function collectFormData() {
-            if (signaturePad.isEmpty()) {
-                showAlert('⚠️ Por favor, firme el documento antes de continuar', 'error');
-                return null;
-            }
-
-            // Validate required conditions
-            if (!document.getElementById('cond-ingreso').checked) {
-                showAlert('⚠️ Debe aceptar la condición obligatoria: Condiciones de ingreso', 'error');
-                return null;
-            }
-
-            if (!document.getElementById('cond-salida').checked) {
-                showAlert('⚠️ Debe aceptar la condición obligatoria: Condiciones de salida', 'error');
-                return null;
-            }
-
-            const data = {
-                fecha: document.getElementById('fecha').value,
-                hora: document.getElementById('hora').value,
-                placa: document.getElementById('placa').value.toUpperCase(),
-                turno: document.getElementById('turno').value,
-                visita: document.querySelector('input[name="visita"]:checked').value,
-                preparado: document.querySelector('input[name="preparado"]:checked').value,
-                marca: document.getElementById('marca').value,
-                color: document.getElementById('color').value,
-                numSillas: document.getElementById('num-sillas').value,
-                clase: document.querySelector('input[name="clase"]:checked').value,
-                servicio: document.querySelector('input[name="servicio"]:checked').value,
-                combustible: document.querySelector('input[name="combustible"]:checked').value,
-                
-                // Conditions accepted
-                condiciones: {
-                    ingreso: document.getElementById('cond-ingreso').checked,
-                    salida: document.getElementById('cond-salida').checked,
-                    comercial: document.getElementById('cond-comercial').checked,
-                    datos: document.getElementById('cond-datos').checked
-                },
-
-                // Pruebas (only if 2nd visit)
-                pruebas: {},
-                cumple: 'na',
-                
-                inspeccion: {},
-                firma: signaturePad.toDataURL(),
-                timestamp: new Date().toISOString()
-            };
-
-            // Only collect pruebas if 2nd visit
-            if (data.visita === '2') {
-                data.pruebas = {
-                    alineacion: document.getElementById('prueba-alineacion').checked,
-                    frenos: document.getElementById('prueba-frenos').checked,
-                    gases: document.getElementById('prueba-gases').checked,
-                    suspension: document.getElementById('prueba-suspension').checked,
-                    luces: document.getElementById('prueba-luces').checked,
-                    opacidad: document.getElementById('prueba-opacidad').checked
-                };
-                data.cumple = document.querySelector('input[name="cumple"]:checked').value;
-            }
-
-            // Collect inspection data (11 or 13 items depending on vehicle type)
-            const maxItems = data.clase === 'moto' ? 13 : 11;
-            for (let i = 1; i <= maxItems; i++) {
-                const checked = document.querySelector(`input[name="insp-${i}"]:checked`);
-                data.inspeccion[`item${i}`] = checked ? checked.value : 'no';
-            }
-
-            // Always collect items 14 and 15
-            for (let i = 14; i <= 15; i++) {
-                const checked = document.querySelector(`input[name="insp-${i}"]:checked`);
-                data.inspeccion[`item${i}`] = checked ? checked.value : 'no';
-            }
-
-            return data;
-        }
-
-        // Save record to storage
-        async function saveRecord() {
-            const data = collectFormData();
-            if (!data) return;
-
+        // -- Load records trying several fallbacks
+        async function loadRecords() {
+            allRecords = [];
             try {
-                const recordId = `record_${Date.now()}`;
-                const stored = await window.storage.set(recordId, JSON.stringify(data));
-                
-                if (stored) {
-                    showAlert('✅ Registro guardado exitosamente', 'success');
-                    loadRecordsCount();
-                    
-                    // Update CSV database if vehicle is new
-                    updateVehiculoDB(data);
-                } else {
-                    showAlert('❌ Error al guardar el registro', 'error');
+                // Try platform provided window.storage first
+                if (window.storage && typeof window.storage.list === 'function') {
+                    try {
+                        const result = await window.storage.list('record_');
+                        // result.keys might be array of strings or objects
+                        let keys = [];
+                        if (Array.isArray(result)) keys = result;
+                        else if (Array.isArray(result.keys)) keys = result.keys;
+                        else if (result && typeof result === 'object' && result.keys) keys = result.keys;
+
+                        // normalize keys array (if array of objects with name property)
+                        keys = keys.map(k => typeof k === 'string' ? k : (k.name || k.key || '')).filter(Boolean);
+
+                        if (keys.length === 0) {
+                            console.info('window.storage.list returned no keys');
+                        } else {
+                            for (const key of keys) {
+                                try {
+                                    const recordResult = await window.storage.get(key);
+                                    // recordResult.value might be a string or object
+                                    let val = recordResult && (recordResult.value !== undefined ? recordResult.value : recordResult);
+                                    if (typeof val === 'string') {
+                                        try { val = JSON.parse(val); } catch (e) { /* leave as string */ }
+                                    }
+                                    const rec = normalizeRecord(val);
+                                    rec.id = key;
+                                    allRecords.push(rec);
+                                } catch (err) {
+                                    console.warn('Error reading key from window.storage:', key, err);
+                                }
+                            }
+                        }
+                    } catch (err) {
+                        console.warn('Error using window.storage.list/get:', err);
+                    }
                 }
-            } catch (error) {
-                console.error('Storage error:', error);
-                showAlert('❌ Error al guardar: ' + error.message, 'error');
-            }
-        }
 
-        // Update vehicle database
-        function updateVehiculoDB(data) {
-            const exists = vehiculosDB.find(v => 
-                v.Placa && v.Placa.toUpperCase() === data.placa
-            );
-
-            if (!exists) {
-                vehiculosDB.push({
-                    Placa: data.placa,
-                    Marca: data.marca,
-                    Color: data.color,
-                    Clase: data.clase,
-                    Servicio: data.servicio,
-                    Combustible: data.combustible,
-                    NumSillas: data.numSillas,
-                    UltimaVisita: data.fecha
-                });
-            }
-        }
-
-        // Load records count
-        async function loadRecordsCount() {
-            try {
-                const result = await window.storage.list('record_');
-                if (result && result.keys) {
-                    console.log(`📊 Total de registros guardados: ${result.keys.length}`);
+                // Fallback: try localStorage for keys that look like records
+                if (allRecords.length === 0 && typeof localStorage !== 'undefined') {
+                    const fallbackKeys = [];
+                    for (let i = 0; i < localStorage.length; i++) {
+                        const k = localStorage.key(i);
+                        if (!k) continue;
+                        if (k.startsWith('record_') || k.toLowerCase().includes('record') || k.toLowerCase().includes('cda')) {
+                            fallbackKeys.push(k);
+                        }
+                    }
+                    if (fallbackKeys.length) {
+                        for (const k of fallbackKeys) {
+                            try {
+                                let raw = localStorage.getItem(k);
+                                try { raw = JSON.parse(raw); } catch(e) { /* keep raw as string */ }
+                                const rec = normalizeRecord(raw);
+                                rec.id = k;
+                                allRecords.push(rec);
+                            } catch (e) {
+                                console.warn('Error parsing localStorage record', k, e);
+                            }
+                        }
+                    }
                 }
+
+                // If still empty, show empty message (but keep UI usable)
+                if (allRecords.length === 0) {
+                    document.getElementById('records-tbody').innerHTML = `
+                        <tr><td colspan="10" class="no-records">📭 No hay registros disponibles</td></tr>
+                    `;
+                    filteredRecords = [];
+                    updateStats();
+                    showAlert('ℹ️ No se encontraron registros en storage/localStorage. Intenta usar "Importar CSV" para cargar datos.', 'info');
+                    return;
+                }
+
+                // Sort by timestamp if available, else by fecha/hora
+                allRecords.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+
+                filteredRecords = [...allRecords];
+                renderTable();
+                updateStats();
+                showAlert(`✅ ${allRecords.length} registros cargados exitosamente`, 'success');
             } catch (error) {
-                console.log('No hay registros previos o error al cargar');
+                console.error('Error loading records:', error);
+                showAlert('❌ Error al cargar los registros (ver consola)', 'error');
             }
         }
 
-        // Generate PDF
-        async function generatePDF() {
-            const data = collectFormData();
-            if (!data) return;
+        // -- Render table (safe access)
+        function renderTable() {
+            const tbody = document.getElementById('records-tbody');
+            if (!filteredRecords || filteredRecords.length === 0) {
+                tbody.innerHTML = `
+                    <tr><td colspan="10" class="no-records">🔍 No se encontraron registros con los filtros aplicados</td></tr>
+                `;
+                return;
+            }
 
-            showAlert('📄 Generando PDF...', 'success');
+            tbody.innerHTML = filteredRecords.map(record => {
+                const claseBadge = record.clase === 'moto' ? 'moto' : 'auto';
+                const preparado = (String(record.preparado || '').toLowerCase() === 'si' || record.preparado === true) ? 'si' : 'no';
+                return `
+                <tr onclick="showDetail('${record.id}')">
+                    <td>${record.fecha || ''}</td>
+                    <td>${record.hora || ''}</td>
+                    <td><strong>${record.placa || ''}</strong></td>
+                    <td>${record.turno || ''}</td>
+                    <td>${record.marca || ''}</td>
+                    <td>${record.color || ''}</td>
+                    <td><span class="badge badge-${claseBadge}">${record.clase || ''}</span></td>
+                    <td><span class="badge ${preparado === 'si' ? 'badge-si' : 'badge-no'}">${preparado === 'si' ? 'Sí' : 'No'}</span></td>
+                    <td>${record.visita || '1'}ª</td>
+                    <td><button class="btn btn-search" style="padding: 6px 15px; font-size: 12px;" onclick="event.stopPropagation(); showDetail('${record.id}')">Ver</button></td>
+                </tr>
+                `;
+            }).join('');
+        }
 
-            const pdfContent = document.getElementById('pdf-content');
-            pdfContent.innerHTML = `
-                <div class="pdf-section">
-                    <div class="pdf-section-title">DATOS BÁSICOS DE RECEPCIÓN</div>
-                    <div class="pdf-grid">
-                        <div class="pdf-field"><strong>Fecha:</strong> ${data.fecha}</div>
-                        <div class="pdf-field"><strong>Hora:</strong> ${data.hora}</div>
-                        <div class="pdf-field"><strong>Placa:</strong> ${data.placa}</div>
-                        <div class="pdf-field"><strong>Turno:</strong> ${data.turno}</div>
-                        <div class="pdf-field"><strong>Visita:</strong> ${data.visita}ª</div>
-                        <div class="pdf-field"><strong>Vehículo Preparado:</strong> ${data.preparado === 'si' ? 'Sí' : 'No'}</div>
-                    </div>
+        // -- Update statistics
+        function updateStats() {
+            document.getElementById('stat-total').textContent = allRecords.length || 0;
+            const today = new Date().toISOString().split('T')[0];
+            const todayRecords = allRecords.filter(r => (r.fecha || '').split('T')[0] === today || new Date(r.timestamp || 0).toISOString().split('T')[0] === today);
+            document.getElementById('stat-today').textContent = todayRecords.length || 0;
+            const uniquePlates = new Set(allRecords.map(r => (r.placa || '').toUpperCase()).filter(Boolean));
+            document.getElementById('stat-unique').textContent = uniquePlates.size || 0;
+            const prepared = allRecords.filter(r => String(r.preparado || '').toLowerCase() === 'si' || r.preparado === true);
+            document.getElementById('stat-prepared').textContent = prepared.length || 0;
+        }
+
+        // -- Apply / reset filters
+        function applyFilters() {
+            const placa = document.getElementById('filter-placa').value.toUpperCase().trim();
+            const fechaDesde = document.getElementById('filter-fecha-desde').value;
+            const fechaHasta = document.getElementById('filter-fecha-hasta').value;
+            const turno = document.getElementById('filter-turno').value.trim();
+            const clase = document.getElementById('filter-clase').value;
+            const preparado = document.getElementById('filter-preparado').value;
+
+            filteredRecords = allRecords.filter(record => {
+                if (placa && !String(record.placa || '').toUpperCase().includes(placa)) return false;
+                if (fechaDesde && (record.fecha || '') < fechaDesde) return false;
+                if (fechaHasta && (record.fecha || '') > fechaHasta) return false;
+                if (turno && !(String(record.turno || '').includes(turno))) return false;
+                if (clase && record.clase !== clase) return false;
+                if (preparado && String(record.preparado || '').toLowerCase() !== preparado) return false;
+                return true;
+            });
+
+            renderTable();
+            showAlert(`🔍 ${filteredRecords.length} registros encontrados`, 'info');
+        }
+
+        function resetFilters() {
+            document.getElementById('filter-placa').value = '';
+            document.getElementById('filter-fecha-desde').value = '';
+            document.getElementById('filter-fecha-hasta').value = '';
+            document.getElementById('filter-turno').value = '';
+            document.getElementById('filter-clase').value = '';
+            document.getElementById('filter-preparado').value = '';
+            filteredRecords = [...allRecords];
+            renderTable();
+            showAlert('🔄 Filtros limpiados', 'info');
+        }
+
+        // -- Detail modal
+        function showDetail(recordId) {
+            const record = allRecords.find(r => r.id === recordId) || filteredRecords.find(r => r.id === recordId);
+            if (!record) return;
+            const safe = (v, fallback='') => (v === undefined || v === null) ? fallback : v;
+
+            const pruebas = record.pruebas || {};
+            const condiciones = record.condiciones || {};
+
+            const detailContent = document.getElementById('detail-content');
+            detailContent.innerHTML = `
+                <div class="detail-grid">
+                    <div class="detail-item"><label>Fecha</label><div class="value">${safe(record.fecha)}</div></div>
+                    <div class="detail-item"><label>Hora</label><div class="value">${safe(record.hora)}</div></div>
+                    <div class="detail-item"><label>Placa</label><div class="value">${safe(record.placa)}</div></div>
+                    <div class="detail-item"><label>Turno</label><div class="value">${safe(record.turno)}</div></div>
+                    <div class="detail-item"><label>Marca</label><div class="value">${safe(record.marca)}</div></div>
+                    <div class="detail-item"><label>Color</label><div class="value">${safe(record.color)}</div></div>
+                    <div class="detail-item"><label>Número de Sillas</label><div class="value">${safe(record.numSillas,'N/A')}</div></div>
+                    <div class="detail-item"><label>Clase</label><div class="value">${safe(record.clase)}</div></div>
+                    <div class="detail-item"><label>Tipo de Servicio</label><div class="value">${safe(record.servicio)}</div></div>
+                    <div class="detail-item"><label>Combustible</label><div class="value">${safe(record.combustible)}</div></div>
+                    <div class="detail-item"><label>Vehículo Preparado</label><div class="value">${(String(record.preparado || '').toLowerCase() === 'si') ? 'Sí' : 'No'}</div></div>
+                    <div class="detail-item"><label>Visita</label><div class="value">${safe(record.visita,'1')}ª</div></div>
                 </div>
 
-                <div class="pdf-section">
-                    <div class="pdf-section-title">DATOS DEL VEHÍCULO</div>
-                    <div class="pdf-grid">
-                        <div class="pdf-field"><strong>Marca:</strong> ${data.marca}</div>
-                        <div class="pdf-field"><strong>Color:</strong> ${data.color}</div>
-                        <div class="pdf-field"><strong>Número de Sillas:</strong> ${data.numSillas}</div>
-                        <div class="pdf-field"><strong>Clase:</strong> ${data.clase}</div>
-                        <div class="pdf-field"><strong>Servicio:</strong> ${data.servicio}</div>
-                        <div class="pdf-field"><strong>Combustible:</strong> ${data.combustible}</div>
-                    </div>
-                </div>
-
-                <div class="pdf-section">
-                    <div class="pdf-section-title">PRUEBAS MECÁNICAS REALIZADAS</div>
-                    ${data.visita === '2' ? `
-                        <div class="pdf-grid">
-                            ${Object.entries(data.pruebas).map(([key, value]) => 
-                                `<div class="pdf-field">${key.charAt(0).toUpperCase() + key.slice(1)}: ${value ? '✓' : '✗'}</div>`
-                            ).join('')}
-                            <div class="pdf-field"><strong>Vehículo Público Cumple:</strong> ${data.cumple === 'si' ? 'Sí' : data.cumple === 'no' ? 'No' : 'N/A'}</div>
+                <div style="margin-top: 25px;">
+                    <h3 style="color: #2c3e50; margin-bottom: 15px;">🔧 Pruebas Mecánicas</h3>
+                    ${String(record.visita) === '2' && Object.keys(pruebas).length ? `
+                        <div class="detail-grid">
+                            ${Object.entries(pruebas).map(([key, value]) => `
+                                <div class="detail-item">
+                                    <label>${key.charAt(0).toUpperCase() + key.slice(1)}</label>
+                                    <div class="value">${safeBoolean(value) ? '✅ Sí' : '❌ No'}</div>
+                                </div>
+                            `).join('')}
+                            <div class="detail-item"><label>Vehículo Público Cumple</label><div class="value">${record.cumple === 'si' ? '✅ Sí' : record.cumple === 'no' ? '❌ No' : 'N/A'}</div></div>
                         </div>
                     ` : `
-                        <div class="pdf-field">
-                            <strong>Primera visita - No aplican pruebas mecánicas</strong>
-                        </div>
+                        <div class="detail-item"><label>Primera visita</label><div class="value">No aplican pruebas mecánicas</div></div>
                     `}
                 </div>
 
-                <div class="pdf-section">
-                    <div class="pdf-section-title">INSPECCIÓN DE PREPARACIÓN</div>
-                    ${generateInspectionTable(data.inspeccion, data.clase)}
-                </div>
-
-                <div class="pdf-section">
-                    <div class="pdf-section-title">ACEPTACIÓN DE CONDICIONES</div>
-                    <div class="pdf-grid">
-                        <div class="pdf-field">
-                            <strong>✅ Condiciones de ingreso:</strong> ${data.condiciones.ingreso ? 'Aceptadas' : 'No aceptadas'}
-                        </div>
-                        <div class="pdf-field">
-                            <strong>✅ Condiciones de salida:</strong> ${data.condiciones.salida ? 'Aceptadas' : 'No aceptadas'}
-                        </div>
-                        <div class="pdf-field">
-                            <strong>Contacto comercial:</strong> ${data.condiciones.comercial ? 'Autorizado' : 'No autorizado'}
-                        </div>
-                        <div class="pdf-field">
-                            <strong>Tratamiento de datos:</strong> ${data.condiciones.datos ? 'Autorizado' : 'No autorizado'}
-                        </div>
+                <div style="margin-top: 25px;">
+                    <h3 style="color: #2c3e50; margin-bottom: 15px;">📋 Condiciones Aceptadas</h3>
+                    <div class="detail-grid">
+                        <div class="detail-item"><label>Condiciones de Ingreso</label><div class="value">${safeBoolean(condiciones.ingreso) ? '✅ Aceptadas' : '❌ No aceptadas'}</div></div>
+                        <div class="detail-item"><label>Condiciones de Salida</label><div class="value">${safeBoolean(condiciones.salida) ? '✅ Aceptadas' : '❌ No aceptadas'}</div></div>
+                        <div class="detail-item"><label>Contacto Comercial</label><div class="value">${safeBoolean(condiciones.comercial) ? '✅ Autorizado' : '❌ No autorizado'}</div></div>
+                        <div class="detail-item"><label>Tratamiento de Datos</label><div class="value">${safeBoolean(condiciones.datos) ? '✅ Autorizado' : '❌ No autorizado'}</div></div>
                     </div>
                 </div>
 
-                <div class="pdf-section">
-                    <div class="pdf-section-title">FIRMA DEL CLIENTE</div>
-                    <div style="margin-top: 20px; text-align: center;">
-                        <strong>Firma del Cliente:</strong><br>
-                        <img src="${data.firma}" class="signature-img" alt="Firma">
-                    </div>
-                    <div class="pdf-field" style="margin-top: 20px;">
-                        <strong>Fecha y Hora de Firma:</strong> ${new Date(data.timestamp).toLocaleString('es-CO')}
-                    </div>
+                <div class="signature-preview">
+                    <h3 style="color: #2c3e50; margin-bottom: 15px;">✍️ Firma del Cliente</h3>
+                    ${record.firma ? `<img src="${record.firma}" alt="Firma">` : `<div style="color:#7f8c8d;">Sin firma disponible</div>`}
+                    <p style="margin-top: 10px; color: #7f8c8d; font-size: 13px;">
+                        Firmado el ${new Date(record.timestamp || Date.now()).toLocaleString('es-CO')}
+                    </p>
                 </div>
             `;
-
-            try {
-                const { jsPDF } = window.jspdf;
-                const element = document.getElementById('pdf-preview');
-                
-                const canvas = await html2canvas(element, {
-                    scale: 2,
-                    useCORS: true,
-                    logging: false
-                });
-
-                const imgData = canvas.toDataURL('image/png');
-                const pdf = new jsPDF('p', 'mm', 'a4');
-                const pdfWidth = pdf.internal.pageSize.getWidth();
-                const pdfHeight = pdf.internal.pageSize.getHeight();
-                const imgWidth = canvas.width;
-                const imgHeight = canvas.height;
-                const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
-                const imgX = (pdfWidth - imgWidth * ratio) / 2;
-                const imgY = 10;
-
-                pdf.addImage(imgData, 'PNG', imgX, imgY, imgWidth * ratio, imgHeight * ratio);
-                
-                const fileName = `CDA_Recepcion_${data.placa}_${data.fecha}_${data.hora.replace(':', '')}.pdf`;
-                pdf.save(fileName);
-
-                showAlert('✅ PDF generado exitosamente', 'success');
-            } catch (error) {
-                console.error('PDF generation error:', error);
-                showAlert('❌ Error al generar PDF: ' + error.message, 'error');
-            }
+            document.getElementById('detail-modal').style.display = 'block';
         }
 
-        // Generate inspection table for PDF
-        function generateInspectionTable(inspeccion, clase) {
-            const baseItems = [
-                'Vehículo descargado (vacío)',
-                'Vehículo limpio',
-                'Vehículo sin tapas o copas',
-                'Alarma desactivada',
-                'Licencia de tránsito del vehículo',
-                'Certificado de gas natural vigente',
-                'Llanta de repuesto visible',
-                'Correcta presión de los neumáticos',
-                'Correcto funcionamiento de las luces',
-                'Vehículo sin candado o carpa suelta',
-                'Indicador de nivel de líquido de frenos visible'
-            ];
+        function closeModal() { document.getElementById('detail-modal').style.display = 'none'; }
+        window.onclick = function(event) { const modal = document.getElementById('detail-modal'); if (event.target === modal) modal.style.display = 'none'; }
 
-            const motoItems = [
-                'Motocicleta de transmisión automática con soporte central',
-                'Motocicleta con porta casco o maletero vacío'
-            ];
-
-            const commonItems = [
-                'Vehículo Bicombustible operando a gasolina',
-                'Vehículo en modo inspección (híbridos)'
-            ];
-
-            let items = [...baseItems];
-            if (clase === 'moto') {
-                items = [...items, ...motoItems];
+        // -- Export to Excel (defensive)
+        function exportToExcel() {
+            if (!filteredRecords || filteredRecords.length === 0) {
+                showAlert('⚠️ No hay registros para exportar', 'info'); return;
             }
-            items = [...items, ...commonItems];
-
-            let table = '<table style="width: 100%; border-collapse: collapse; font-size: 11px;">';
-            table += '<thead><tr><th style="border: 1px solid #000; padding: 8px; background: #34495e; color: white;">Descripción</th>';
-            table += '<th style="border: 1px solid #000; padding: 8px; background: #34495e; color: white; width: 60px;">Sí</th>';
-            table += '<th style="border: 1px solid #000; padding: 8px; background: #34495e; color: white; width: 60px;">No</th></tr></thead>';
-            table += '<tbody>';
-
-            items.forEach((item, index) => {
-                const itemKey = `item${index + 1}`;
-                const value = inspeccion[itemKey] === 'si' ? '✓' : '';
-                const valueNo = inspeccion[itemKey] === 'no' ? '✓' : '';
-                table += `<tr>
-                    <td style="border: 1px solid #000; padding: 8px;">${item}</td>
-                    <td style="border: 1px solid #000; padding: 8px; text-align: center;">${value}</td>
-                    <td style="border: 1px solid #000; padding: 8px; text-align: center;">${valueNo}</td>
-                </tr>`;
+            const exportData = filteredRecords.map(record => {
+                const pruebas = record.pruebas || {};
+                return {
+                    'Fecha': record.fecha || '',
+                    'Hora': record.hora || '',
+                    'Placa': record.placa || '',
+                    'Turno': record.turno || '',
+                    'Marca': record.marca || '',
+                    'Color': record.color || '',
+                    'Num Sillas': record.numSillas || '',
+                    'Clase': record.clase || '',
+                    'Servicio': record.servicio || '',
+                    'Combustible': record.combustible || '',
+                    'Preparado': record.preparado || '',
+                    'Visita': (record.visita || '') + 'ª',
+                    'Alineación': safeBoolean(pruebas.alineacion) ? 'Sí' : 'No',
+                    'Frenos': safeBoolean(pruebas.frenos) ? 'Sí' : 'No',
+                    'Gases': safeBoolean(pruebas.gases) ? 'Sí' : 'No',
+                    'Suspensión': safeBoolean(pruebas.suspension) ? 'Sí' : 'No',
+                    'Luces': safeBoolean(pruebas.luces) ? 'Sí' : 'No',
+                    'Opacidad': safeBoolean(pruebas.opacidad) ? 'Sí' : 'No',
+                    'Fecha Registro': new Date(record.timestamp || Date.now()).toLocaleString('es-CO')
+                };
             });
-
-            table += '</tbody></table>';
-            return table;
+            const ws = XLSX.utils.json_to_sheet(exportData);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Registros CDA');
+            const fileName = `CDA_Registros_${new Date().toISOString().split('T')[0]}.xlsx`;
+            XLSX.writeFile(wb, fileName);
+            showAlert(`✅ Archivo Excel exportado: ${fileName}`, 'success');
         }
 
-        // Responsive signature pad
-        function resizeCanvas() {
-            const ratio = Math.max(window.devicePixelRatio || 1, 1);
-            canvas.width = canvas.offsetWidth * ratio;
-            canvas.height = canvas.offsetHeight * ratio;
-            canvas.getContext("2d").scale(ratio, ratio);
-            signaturePad.clear();
+        // -- CSV/XLSX import: parse file and save normalized records to storage/localStorage
+        async function importCSV() {
+            const input = document.getElementById('csv-file');
+            if (!input.files || input.files.length === 0) { showAlert('Seleccione un archivo CSV/XLSX para importar', 'info'); return; }
+            const file = input.files[0];
+            try {
+                const data = await file.arrayBuffer();
+                const workbook = XLSX.read(data, { type: 'array' });
+                const firstSheet = workbook.SheetNames[0];
+                const json = XLSX.utils.sheet_to_json(workbook.Sheets[firstSheet], { defval: '' });
+                if (!Array.isArray(json) || json.length === 0) { showAlert('El archivo no contiene filas', 'info'); return; }
+
+                // Save each normalized row into storage/localStorage
+                let count = 0;
+                for (let i = 0; i < json.length; i++) {
+                    const raw = json[i];
+                    const rec = normalizeRecord(raw);
+                    // create an id: record_{timestamp}_{i}
+                    const id = `record_${Date.now()}_${i}`;
+                    rec.id = id;
+                    try {
+                        if (window.storage && typeof window.storage.set === 'function') {
+                            // some platforms expect { key, value } shape; try common patterns
+                            try {
+                                await window.storage.set(id, JSON.stringify(rec));
+                            } catch (e) {
+                                // try alternative signature
+                                try { await window.storage.set({ key: id, value: JSON.stringify(rec) }); } catch (err) { console.warn('window.storage.set alternative failed', err); }
+                            }
+                        } else if (typeof localStorage !== 'undefined') {
+                            localStorage.setItem(id, JSON.stringify(rec));
+                        }
+                        allRecords.push(rec);
+                        count++;
+                    } catch (err) {
+                        console.error('Error saving imported record', err);
+                    }
+                }
+
+                // Refresh view
+                filteredRecords = [...allRecords];
+                // sort
+                allRecords.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+                renderTable();
+                updateStats();
+                showAlert(`✅ ${count} filas importadas correctamente`, 'success');
+            } catch (err) {
+                console.error('Error importing file:', err);
+                showAlert('❌ Error al importar el archivo (ver consola)', 'error');
+            }
         }
 
-        window.addEventListener("resize", resizeCanvas);
-        resizeCanvas();
+        // -- Alerts
+        function showAlert(message, type) {
+            const container = document.getElementById('alert-container');
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type === 'error' ? 'info' : (type || 'info')}`;
+            alert.textContent = message;
+            container.appendChild(alert);
+            setTimeout(() => { alert.remove(); }, 6000);
+        }
     </script>
 </body>
 </html>
