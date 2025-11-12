@@ -61,6 +61,7 @@
         .detail-item .value { color: #2c3e50; font-size: 16px; font-weight: 600; }
         .signature-preview { text-align: center; margin-top: 25px; padding: 20px; background: #f8f9fa; border-radius: 8px; }
         .signature-preview img { max-width: 400px; border: 2px solid #2c3e50; border-radius: 8px; padding: 10px; background: white; }
+        .inline-row { display:flex; gap:10px; align-items:center; }
         @media (max-width: 768px) {
             .stats-grid { grid-template-columns: 1fr; }
             .filters-grid { grid-template-columns: 1fr; }
@@ -110,7 +111,12 @@
                 <div class="filters-grid">
                     <div class="filter-group">
                         <label>Placa</label>
-                        <input type="text" id="filter-placa" placeholder="Ej: ABC123">
+                        <!-- Add datalist for autocomplete suggestions -->
+                        <div class="inline-row">
+                            <input type="text" id="filter-placa" list="plates-datalist" placeholder="Ej: ABC123" oninput="onPlateInput()">
+                            <datalist id="plates-datalist"></datalist>
+                            <button class="btn btn-search" style="padding: 8px 12px; font-size:13px;" onclick="autofillFromPlate()">🔎 Buscar y Autorellenar</button>
+                        </div>
                     </div>
                     <div class="filter-group">
                         <label>Fecha Desde</label>
@@ -123,6 +129,18 @@
                     <div class="filter-group">
                         <label>Turno</label>
                         <input type="text" id="filter-turno" placeholder="Ej: 18 18-1">
+                    </div>
+                    <div class="filter-group">
+                        <label>Marca</label>
+                        <input type="text" id="filter-marca" placeholder="Ej: Toyota">
+                    </div>
+                    <div class="filter-group">
+                        <label>Color</label>
+                        <input type="text" id="filter-color" placeholder="Ej: Blanco">
+                    </div>
+                    <div class="filter-group">
+                        <label>Número de Sillas</label>
+                        <input type="text" id="filter-numsillas" placeholder="Ej: 5">
                     </div>
                     <div class="filter-group">
                         <label>Clase de Vehículo</label>
@@ -143,6 +161,14 @@
                             <option value="no">No</option>
                         </select>
                     </div>
+                    <div class="filter-group">
+                        <label>Tipo de Servicio</label>
+                        <input type="text" id="filter-servicio" placeholder="Ej: Público/Particular">
+                    </div>
+                    <div class="filter-group">
+                        <label>Combustible</label>
+                        <input type="text" id="filter-combustible" placeholder="Ej: Gasolina">
+                    </div>
                 </div>
                 <div class="filter-buttons">
                     <button class="btn btn-search" onclick="applyFilters()">🔍 Buscar</button>
@@ -156,6 +182,9 @@
                     <button class="btn" style="background:#6c5ce7;color:white;" onclick="importCSV()">⬆️ Importar CSV/XLSX</button>
                     <small style="color:#7f8c8d;">(Si la plataforma sube el CSV pero no guarda en storage, usa esta importación para probar)</small>
                 </div>
+
+                <!-- Small preview area to show the autofill result -->
+                <div id="autorellenado-preview" style="margin-top:12px; color:#2c3e50; font-weight:600;"></div>
             </div>
 
             <!-- Tabla de Registros -->
@@ -202,7 +231,7 @@
 
         window.addEventListener('load', () => { loadRecords(); });
 
-        // -- Utilities: normalization, safe access
+        // -- Utilities
         function safeBoolean(value) {
             if (value === undefined || value === null) return false;
             if (typeof value === 'boolean') return value;
@@ -211,17 +240,13 @@
         }
 
         function normalizeRecord(raw) {
-            // Map common CSV/header variants into internal fields
             const normalized = {};
             if (!raw || typeof raw !== 'object') return normalized;
-
-            // Make a map of key -> value with normalized key names (lowercased, no spaces)
             const map = {};
             Object.keys(raw).forEach(k => {
                 const key = k.toLowerCase().replace(/\s+/g, '').replace(/[^a-z0-9]/g,'');
                 map[key] = raw[k];
             });
-
             normalized.fecha = map['fecha'] || map['date'] || map['fecharegistro'] || '';
             normalized.hora = map['hora'] || map['time'] || '';
             normalized.placa = (map['placa'] || map['plate'] || map['placanum'] || '').toString().toUpperCase();
@@ -234,109 +259,78 @@
             normalized.combustible = map['combustible'] || map['fuel'] || '';
             normalized.preparado = (map['preparado'] || map['prepared'] || '').toString().toLowerCase() || 'no';
             normalized.visita = map['visita'] || map['visit'] || '1';
-
-            // pruebas may be flattened columns like 'alineacion' or JSON in a 'pruebas' column
             const pruebas = {};
             ['alineacion','frenos','gases','suspension','luces','opacidad'].forEach(p => {
                 pruebas[p] = safeBoolean(map[p]) || false;
             });
-            // if there's a pruebas JSON string column, try to parse it
             if (map['pruebas']) {
                 try {
                     const parsed = typeof map['pruebas'] === 'string' ? JSON.parse(map['pruebas']) : map['pruebas'];
                     Object.assign(pruebas, parsed);
-                } catch(e) {
-                    // ignore parse errors
-                }
+                } catch(e) {}
             }
             normalized.pruebas = pruebas;
-
             const condiciones = {};
             condiciones.ingreso = safeBoolean(map['condicionesingreso'] || map['ingreso'] || map['condicioningreso']);
             condiciones.salida = safeBoolean(map['condicionessalida'] || map['salida']);
             condiciones.comercial = safeBoolean(map['comercial'] || map['contactocomercial']);
             condiciones.datos = safeBoolean(map['datos'] || map['tratamientodedatos']);
             normalized.condiciones = condiciones;
-
             normalized.cumple = (map['cumple'] || map['vehiculopublicocumple'] || '').toString().toLowerCase();
             normalized.firma = map['firma'] || map['signature'] || '';
-            // timestamp fallback: try provided, else compose from fecha/hora or Date.now()
             if (map['timestamp']) normalized.timestamp = Number(map['timestamp']) || Date.now();
             else if (normalized.fecha || normalized.hora) {
                 const t = new Date((normalized.fecha || '') + ' ' + (normalized.hora || ''));
                 normalized.timestamp = isNaN(t.getTime()) ? Date.now() : t.getTime();
             } else normalized.timestamp = Date.now();
-
             return normalized;
         }
 
-        // -- Load records trying several fallbacks
+        // -- Load records with fallback and then populate plates datalist
         async function loadRecords() {
             allRecords = [];
             try {
-                // Try platform provided window.storage first
                 if (window.storage && typeof window.storage.list === 'function') {
                     try {
                         const result = await window.storage.list('record_');
-                        // result.keys might be array of strings or objects
                         let keys = [];
                         if (Array.isArray(result)) keys = result;
                         else if (Array.isArray(result.keys)) keys = result.keys;
                         else if (result && typeof result === 'object' && result.keys) keys = result.keys;
-
-                        // normalize keys array (if array of objects with name property)
                         keys = keys.map(k => typeof k === 'string' ? k : (k.name || k.key || '')).filter(Boolean);
-
-                        if (keys.length === 0) {
-                            console.info('window.storage.list returned no keys');
-                        } else {
-                            for (const key of keys) {
-                                try {
-                                    const recordResult = await window.storage.get(key);
-                                    // recordResult.value might be a string or object
-                                    let val = recordResult && (recordResult.value !== undefined ? recordResult.value : recordResult);
-                                    if (typeof val === 'string') {
-                                        try { val = JSON.parse(val); } catch (e) { /* leave as string */ }
-                                    }
-                                    const rec = normalizeRecord(val);
-                                    rec.id = key;
-                                    allRecords.push(rec);
-                                } catch (err) {
-                                    console.warn('Error reading key from window.storage:', key, err);
+                        for (const key of keys) {
+                            try {
+                                const recordResult = await window.storage.get(key);
+                                let val = recordResult && (recordResult.value !== undefined ? recordResult.value : recordResult);
+                                if (typeof val === 'string') {
+                                    try { val = JSON.parse(val); } catch (e) {}
                                 }
-                            }
+                                const rec = normalizeRecord(val);
+                                rec.id = key;
+                                allRecords.push(rec);
+                            } catch (err) { console.warn('Error reading key from window.storage:', key, err); }
                         }
-                    } catch (err) {
-                        console.warn('Error using window.storage.list/get:', err);
-                    }
+                    } catch (err) { console.warn('Error using window.storage.list/get:', err); }
                 }
 
-                // Fallback: try localStorage for keys that look like records
                 if (allRecords.length === 0 && typeof localStorage !== 'undefined') {
                     const fallbackKeys = [];
                     for (let i = 0; i < localStorage.length; i++) {
                         const k = localStorage.key(i);
                         if (!k) continue;
-                        if (k.startsWith('record_') || k.toLowerCase().includes('record') || k.toLowerCase().includes('cda')) {
-                            fallbackKeys.push(k);
-                        }
+                        if (k.startsWith('record_') || k.toLowerCase().includes('record') || k.toLowerCase().includes('cda')) fallbackKeys.push(k);
                     }
-                    if (fallbackKeys.length) {
-                        for (const k of fallbackKeys) {
-                            try {
-                                let raw = localStorage.getItem(k);
-                                try { raw = JSON.parse(raw); } catch(e) { /* keep raw as string */ }
-                                const rec = normalizeRecord(raw);
-                                rec.id = k;
-                                allRecords.push(rec);
-                            } catch (e) {
-                                console.warn('Error parsing localStorage record', k, e);
-                            }
-                        }
+                    for (const k of fallbackKeys) {
+                        try {
+                            let raw = localStorage.getItem(k);
+                            try { raw = JSON.parse(raw); } catch(e) {}
+                            const rec = normalizeRecord(raw);
+                            rec.id = k;
+                            allRecords.push(rec);
+                        } catch (e) { console.warn('Error parsing localStorage record', k, e); }
                     }
                 }
 
-                // If still empty, show empty message (but keep UI usable)
                 if (allRecords.length === 0) {
                     document.getElementById('records-tbody').innerHTML = `
                         <tr><td colspan="10" class="no-records">📭 No hay registros disponibles</td></tr>
@@ -344,15 +338,15 @@
                     filteredRecords = [];
                     updateStats();
                     showAlert('ℹ️ No se encontraron registros en storage/localStorage. Intenta usar "Importar CSV" para cargar datos.', 'info');
+                    populatePlatesDatalist();
                     return;
                 }
 
-                // Sort by timestamp if available, else by fecha/hora
                 allRecords.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-
                 filteredRecords = [...allRecords];
                 renderTable();
                 updateStats();
+                populatePlatesDatalist();
                 showAlert(`✅ ${allRecords.length} registros cargados exitosamente`, 'success');
             } catch (error) {
                 console.error('Error loading records:', error);
@@ -360,16 +354,88 @@
             }
         }
 
-        // -- Render table (safe access)
-        function renderTable() {
-            const tbody = document.getElementById('records-tbody');
-            if (!filteredRecords || filteredRecords.length === 0) {
-                tbody.innerHTML = `
-                    <tr><td colspan="10" class="no-records">🔍 No se encontraron registros con los filtros aplicados</td></tr>
-                `;
+        // -- Populate datalist with unique plates
+        function populatePlatesDatalist() {
+            const datalist = document.getElementById('plates-datalist');
+            if (!datalist) return;
+            // unique plates sorted
+            const plates = Array.from(new Set(allRecords.map(r => (r.placa || '').toString().toUpperCase()).filter(Boolean))).sort();
+            datalist.innerHTML = plates.map(p => `<option value="${p}">`).join('');
+        }
+
+        function onPlateInput() {
+            // Optionally, we can implement live suggestions or auto-preview as user types
+            const placa = document.getElementById('filter-placa').value.trim().toUpperCase();
+            if (!placa) {
+                document.getElementById('autorellenado-preview').textContent = '';
+                return;
+            }
+            // show a preview of existence but don't autofill until user clicks button
+            const rec = findLatestRecordByPlate(placa);
+            if (rec) {
+                document.getElementById('autorellenado-preview').textContent = `🟢 Placa encontrada: última visita ${rec.visita || '1'} - ${rec.marca || ''} ${rec.color || ''} (${rec.fecha || ''} ${rec.hora || ''})`;
+            } else {
+                document.getElementById('autorellenado-preview').textContent = `🔴 Placa no encontrada en la base cargada`;
+            }
+        }
+
+        // find most recent record by plate
+        function findLatestRecordByPlate(placa) {
+            if (!placa) return null;
+            const up = placa.toString().toUpperCase();
+            const matches = allRecords.filter(r => (r.placa || '').toString().toUpperCase() === up);
+            if (matches.length === 0) return null;
+            matches.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+            return matches[0];
+        }
+
+        // Autofill fields from found plate (button)
+        function autofillFromPlate() {
+            const placa = document.getElementById('filter-placa').value.trim().toUpperCase();
+            if (!placa) { showAlert('Ingrese una placa para buscar', 'info'); return; }
+            const rec = findLatestRecordByPlate(placa);
+            if (!rec) {
+                showAlert(`🔍 No se encontró la placa ${placa} en la base cargada`, 'info');
+                document.getElementById('autorellenado-preview').textContent = `🔴 Placa ${placa} no encontrada`;
                 return;
             }
 
+            // Fill visible filter inputs with data from record (so user can adjust and then press Buscar)
+            document.getElementById('filter-turno').value = rec.turno || '';
+            document.getElementById('filter-marca').value = rec.marca || '';
+            document.getElementById('filter-color').value = rec.color || '';
+            document.getElementById('filter-numsillas').value = rec.numSillas || '';
+            // set clase select to one of the known values if possible
+            const claseVal = rec.clase || '';
+            const claseSelect = document.getElementById('filter-clase');
+            if (claseSelect) {
+                const option = Array.from(claseSelect.options).find(o => o.value === claseVal);
+                claseSelect.value = option ? claseVal : '';
+            }
+            // preparado (si/no) select
+            const prepVal = (String(rec.preparado || '').toLowerCase() === 'si') ? 'si' : ((String(rec.preparado || '').toLowerCase() === 'no') ? 'no' : '');
+            const prepSelect = document.getElementById('filter-preparado');
+            if (prepSelect) prepSelect.value = prepVal;
+
+            document.getElementById('filter-servicio').value = rec.servicio || '';
+            document.getElementById('filter-combustible').value = rec.combustible || '';
+            // Optionally set fecha/hora to record's date to easily find it
+            if (rec.fecha) document.getElementById('filter-fecha-desde').value = rec.fecha;
+            if (rec.fecha) document.getElementById('filter-fecha-hasta').value = rec.fecha;
+
+            document.getElementById('autorellenado-preview').textContent = `✅ Autorrelleno aplicado desde la última fila encontrada (${rec.fecha || ''} ${rec.hora || ''})`;
+            showAlert(`✅ Autorrellado con datos de la placa ${placa}`, 'success');
+            // Optionally run the filters automatically
+            // applyFilters();
+        }
+
+        // -- Render table
+        function renderTable() {
+            const tbody = document.getElementById('records-tbody');
+            if (!filteredRecords || filteredRecords.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="10" class="no-records">🔍 No se encontraron registros con los filtros aplicados</td></tr>`;
+                return;
+            }
             tbody.innerHTML = filteredRecords.map(record => {
                 const claseBadge = record.clase === 'moto' ? 'moto' : 'auto';
                 const preparado = (String(record.preparado || '').toLowerCase() === 'si' || record.preparado === true) ? 'si' : 'no';
@@ -410,6 +476,11 @@
             const turno = document.getElementById('filter-turno').value.trim();
             const clase = document.getElementById('filter-clase').value;
             const preparado = document.getElementById('filter-preparado').value;
+            const marca = document.getElementById('filter-marca').value.trim();
+            const color = document.getElementById('filter-color').value.trim();
+            const numsillas = document.getElementById('filter-numsillas').value.trim();
+            const servicio = document.getElementById('filter-servicio').value.trim();
+            const combustible = document.getElementById('filter-combustible').value.trim();
 
             filteredRecords = allRecords.filter(record => {
                 if (placa && !String(record.placa || '').toUpperCase().includes(placa)) return false;
@@ -418,6 +489,11 @@
                 if (turno && !(String(record.turno || '').includes(turno))) return false;
                 if (clase && record.clase !== clase) return false;
                 if (preparado && String(record.preparado || '').toLowerCase() !== preparado) return false;
+                if (marca && !(String(record.marca || '').toLowerCase().includes(marca.toLowerCase()))) return false;
+                if (color && !(String(record.color || '').toLowerCase().includes(color.toLowerCase()))) return false;
+                if (numsillas && String(record.numSillas || '') !== numsillas) return false;
+                if (servicio && !(String(record.servicio || '').toLowerCase().includes(servicio.toLowerCase()))) return false;
+                if (combustible && !(String(record.combustible || '').toLowerCase().includes(combustible.toLowerCase()))) return false;
                 return true;
             });
 
@@ -432,9 +508,15 @@
             document.getElementById('filter-turno').value = '';
             document.getElementById('filter-clase').value = '';
             document.getElementById('filter-preparado').value = '';
+            document.getElementById('filter-marca').value = '';
+            document.getElementById('filter-color').value = '';
+            document.getElementById('filter-numsillas').value = '';
+            document.getElementById('filter-servicio').value = '';
+            document.getElementById('filter-combustible').value = '';
             filteredRecords = [...allRecords];
             renderTable();
             showAlert('🔄 Filtros limpiados', 'info');
+            document.getElementById('autorellenado-preview').textContent = '';
         }
 
         // -- Detail modal
@@ -442,10 +524,8 @@
             const record = allRecords.find(r => r.id === recordId) || filteredRecords.find(r => r.id === recordId);
             if (!record) return;
             const safe = (v, fallback='') => (v === undefined || v === null) ? fallback : v;
-
             const pruebas = record.pruebas || {};
             const condiciones = record.condiciones || {};
-
             const detailContent = document.getElementById('detail-content');
             detailContent.innerHTML = `
                 <div class="detail-grid">
@@ -504,11 +584,9 @@
         function closeModal() { document.getElementById('detail-modal').style.display = 'none'; }
         window.onclick = function(event) { const modal = document.getElementById('detail-modal'); if (event.target === modal) modal.style.display = 'none'; }
 
-        // -- Export to Excel (defensive)
+        // -- Export to Excel
         function exportToExcel() {
-            if (!filteredRecords || filteredRecords.length === 0) {
-                showAlert('⚠️ No hay registros para exportar', 'info'); return;
-            }
+            if (!filteredRecords || filteredRecords.length === 0) { showAlert('⚠️ No hay registros para exportar', 'info'); return; }
             const exportData = filteredRecords.map(record => {
                 const pruebas = record.pruebas || {};
                 return {
@@ -541,7 +619,7 @@
             showAlert(`✅ Archivo Excel exportado: ${fileName}`, 'success');
         }
 
-        // -- CSV/XLSX import: parse file and save normalized records to storage/localStorage
+        // -- CSV/XLSX import
         async function importCSV() {
             const input = document.getElementById('csv-file');
             if (!input.files || input.files.length === 0) { showAlert('Seleccione un archivo CSV/XLSX para importar', 'info'); return; }
@@ -553,21 +631,17 @@
                 const json = XLSX.utils.sheet_to_json(workbook.Sheets[firstSheet], { defval: '' });
                 if (!Array.isArray(json) || json.length === 0) { showAlert('El archivo no contiene filas', 'info'); return; }
 
-                // Save each normalized row into storage/localStorage
                 let count = 0;
                 for (let i = 0; i < json.length; i++) {
                     const raw = json[i];
                     const rec = normalizeRecord(raw);
-                    // create an id: record_{timestamp}_{i}
                     const id = `record_${Date.now()}_${i}`;
                     rec.id = id;
                     try {
                         if (window.storage && typeof window.storage.set === 'function') {
-                            // some platforms expect { key, value } shape; try common patterns
                             try {
                                 await window.storage.set(id, JSON.stringify(rec));
                             } catch (e) {
-                                // try alternative signature
                                 try { await window.storage.set({ key: id, value: JSON.stringify(rec) }); } catch (err) { console.warn('window.storage.set alternative failed', err); }
                             }
                         } else if (typeof localStorage !== 'undefined') {
@@ -575,17 +649,14 @@
                         }
                         allRecords.push(rec);
                         count++;
-                    } catch (err) {
-                        console.error('Error saving imported record', err);
-                    }
+                    } catch (err) { console.error('Error saving imported record', err); }
                 }
 
-                // Refresh view
                 filteredRecords = [...allRecords];
-                // sort
                 allRecords.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
                 renderTable();
                 updateStats();
+                populatePlatesDatalist();
                 showAlert(`✅ ${count} filas importadas correctamente`, 'success');
             } catch (err) {
                 console.error('Error importing file:', err);
