@@ -2,8 +2,8 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Recepción de Vehículos y Motocicletas - CDA Barrancabermeja</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Recepción de Vehículos - CDA Barrancabermeja</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
@@ -14,251 +14,343 @@
         }
 
         body {
-            font-family: Arial, sans-serif;
-            background-color: #f0f0f0;
-            padding: 15px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 10px;
+            min-height: 100vh;
         }
 
         .container {
-            max-width: 1100px;
+            max-width: 1200px;
             margin: 0 auto;
             background: white;
-            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            border-radius: 20px;
+            box-shadow: 0 15px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
         }
 
-        /* Header con logo */
+        /* Header Mejorado */
         .header-table {
             width: 100%;
             border-collapse: collapse;
-            border: 2px solid #0033A0;
+            background: linear-gradient(135deg, #0033A0 0%, #0055CC 100%);
         }
 
         .header-table td {
-            border: 1px solid #0033A0;
-            padding: 10px;
+            border: none;
+            padding: 20px;
             vertical-align: middle;
         }
 
         .logo-cell {
-            width: 150px;
+            width: 140px;
             text-align: center;
+        }
+
+        .logo-container {
             background: white;
+            border-radius: 50%;
+            padding: 15px;
+            display: inline-block;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
         }
 
         .logo-img {
-            max-width: 120px;
+            max-width: 100px;
             height: auto;
         }
 
         .title-cell {
             text-align: center;
-            background: white;
         }
 
         .title-cell h1 {
-            font-size: 18px;
+            font-size: 22px;
             font-weight: bold;
-            color: #0033A0;
-            margin-bottom: 5px;
+            color: white;
+            margin-bottom: 8px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
         }
 
         .title-cell h2 {
-            font-size: 14px;
-            font-weight: bold;
-            color: #0033A0;
+            font-size: 15px;
+            font-weight: 600;
+            color: #FFD700;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
         }
 
         .code-cell {
-            width: 200px;
+            width: 150px;
             text-align: center;
-            background: white;
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
         }
 
         .code-cell div {
             font-weight: bold;
-            color: #0033A0;
-            font-size: 13px;
-            margin: 3px 0;
-        }
-
-        /* Sección de datos básicos */
-        .datos-basicos {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 10px;
-            border: 2px solid #0033A0;
-        }
-
-        .datos-basicos th {
-            background: #0033A0;
             color: white;
-            padding: 8px;
-            font-size: 13px;
+            font-size: 12px;
+            margin: 4px 0;
+        }
+
+        /* Contenido del Formulario */
+        .form-content {
+            padding: 25px;
+        }
+
+        .section {
+            margin-bottom: 25px;
+            border: 2px solid #e8ecf1;
+            border-radius: 15px;
+            padding: 0;
+            background: #ffffff;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .section:hover {
+            box-shadow: 0 6px 25px rgba(0,0,0,0.12);
+            transform: translateY(-2px);
+        }
+
+        .section-title {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: white;
+            padding: 15px 20px;
             font-weight: bold;
-            border: 1px solid #0033A0;
+            font-size: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
-        .datos-basicos td {
-            padding: 10px;
-            border: 1px solid #0033A0;
+        .section-content {
+            padding: 20px;
         }
 
-        .datos-basicos input[type="text"],
-        .datos-basicos input[type="date"],
-        .datos-basicos input[type="time"],
-        .datos-basicos input[type="number"] {
-            width: 100%;
-            padding: 6px;
-            border: 1px solid #ccc;
-            border-radius: 3px;
+        /* Tabla de datos básicos responsive */
+        .datos-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #2c3e50;
+            font-size: 13px;
+        }
+
+        .form-group input,
+        .form-group select {
+            padding: 12px;
+            border: 2px solid #dfe6e9;
+            border-radius: 10px;
             font-size: 14px;
+            transition: all 0.3s;
+            background: #f8f9fa;
         }
 
-        .turno-especial {
-            font-size: 22px;
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #3498db;
+            background: white;
+            box-shadow: 0 0 0 4px rgba(52, 152, 219, 0.1);
+        }
+
+        .turno-display {
+            font-size: 28px;
             font-weight: bold;
             color: #FF6600;
             text-align: center;
+            padding: 15px;
+            background: linear-gradient(135deg, #fff5e6 0%, #ffe6cc 100%);
+            border-radius: 10px;
+            margin-top: 8px;
         }
 
-        /* Radio buttons */
+        /* Radio buttons mejorados */
         .radio-group {
             display: flex;
             gap: 15px;
-            align-items: center;
+            flex-wrap: wrap;
+            margin-top: 10px;
         }
 
         .radio-item {
             display: flex;
             align-items: center;
-            gap: 5px;
+            gap: 8px;
+            padding: 10px 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+
+        .radio-item:hover {
+            background: #e8f4f8;
+            border-color: #3498db;
         }
 
         .radio-item input[type="radio"] {
-            width: 18px;
-            height: 18px;
+            width: 20px;
+            height: 20px;
             cursor: pointer;
+            accent-color: #3498db;
+        }
+
+        .radio-item input[type="radio"]:checked + label {
+            color: #3498db;
+            font-weight: bold;
         }
 
         .radio-item label {
-            font-size: 13px;
+            font-size: 14px;
             cursor: pointer;
-        }
-
-        /* Sección de detalles del vehículo */
-        .seccion-titulo {
-            background: #0033A0;
-            color: white;
-            padding: 8px 15px;
-            font-weight: bold;
-            font-size: 13px;
-            margin-top: 10px;
-        }
-
-        .detalle-vehiculo {
-            width: 100%;
-            border-collapse: collapse;
-            border: 2px solid #0033A0;
-        }
-
-        .detalle-vehiculo td {
-            padding: 8px;
-            border: 1px solid #0033A0;
-        }
-
-        .detalle-vehiculo .label-cell {
-            background: #0033A0;
-            color: white;
-            font-weight: bold;
-            font-size: 13px;
-            width: 200px;
+            margin: 0;
         }
 
         /* Checkboxes para pruebas */
         .checkbox-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-            padding: 10px;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
         }
 
         .checkbox-item {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
+            padding: 12px 15px;
+            background: white;
+            border-radius: 10px;
+            border: 2px solid #ecf0f1;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .checkbox-item:hover {
+            border-color: #3498db;
+            background: #f0f8ff;
+            transform: translateX(3px);
         }
 
         .checkbox-item input[type="checkbox"] {
-            width: 18px;
-            height: 18px;
+            width: 22px;
+            height: 22px;
             cursor: pointer;
+            accent-color: #3498db;
+        }
+
+        .checkbox-item input[type="checkbox"]:disabled {
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+
+        .checkbox-item.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background: #f5f5f5;
+        }
+
+        .checkbox-item.disabled:hover {
+            border-color: #ecf0f1;
+            background: #f5f5f5;
+            transform: none;
         }
 
         .checkbox-item label {
-            font-size: 13px;
             cursor: pointer;
+            font-size: 13px;
+            color: #2c3e50;
+            flex: 1;
         }
 
-        /* Tabla de inspección */
+        .checkbox-item.disabled label {
+            cursor: not-allowed;
+        }
+
+        /* Tabla de inspección responsive */
         .tabla-inspeccion {
             width: 100%;
             border-collapse: collapse;
-            border: 2px solid #0033A0;
-            margin-top: 10px;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
 
         .tabla-inspeccion th {
-            background: #0033A0;
+            background: linear-gradient(135deg, #34495e 0%, #2c3e50 100%);
             color: white;
-            padding: 10px;
+            padding: 15px 10px;
             font-size: 13px;
             font-weight: bold;
-            border: 1px solid #0033A0;
         }
 
         .tabla-inspeccion td {
-            padding: 10px;
-            border: 1px solid #0033A0;
-            font-size: 12px;
+            padding: 12px 10px;
+            border-bottom: 1px solid #ecf0f1;
+            font-size: 13px;
+        }
+
+        .tabla-inspeccion tr:hover {
+            background: #f8f9fa;
         }
 
         .tabla-inspeccion td.radio-cell {
             text-align: center;
-            width: 60px;
+            width: 70px;
+            background: #f8f9fa;
         }
 
         .tabla-inspeccion input[type="radio"] {
-            width: 18px;
-            height: 18px;
+            width: 20px;
+            height: 20px;
             cursor: pointer;
+            accent-color: #27ae60;
         }
 
-        /* Sección de condiciones y firma */
+        /* Sección de condiciones moderna */
         .condiciones-section {
-            background: #E8F4F8;
-            border: 2px solid #0033A0;
-            padding: 20px;
-            margin-top: 15px;
+            background: linear-gradient(135deg, #E8F4F8 0%, #D6EAF8 100%);
+            border: none;
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 20px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
         }
 
         .condiciones-titulo {
-            background: #3A9AD9;
+            background: linear-gradient(135deg, #3A9AD9 0%, #2E86C1 100%);
             color: white;
-            padding: 10px 15px;
+            padding: 15px 20px;
             font-weight: bold;
-            font-size: 14px;
-            margin: -20px -20px 15px -20px;
+            font-size: 15px;
+            margin: -25px -25px 20px -25px;
             display: flex;
             align-items: center;
             gap: 10px;
+            border-radius: 15px 15px 0 0;
         }
 
         .condiciones-alerta {
-            background: #FFF8DC;
+            background: linear-gradient(135deg, #FFF8DC 0%, #FFEAA7 100%);
             border: 2px solid #FFD700;
-            padding: 15px;
-            margin-bottom: 15px;
-            border-radius: 5px;
+            padding: 18px;
+            margin-bottom: 20px;
+            border-radius: 12px;
+            box-shadow: 0 3px 10px rgba(255, 215, 0, 0.2);
         }
 
         .condiciones-alerta h3 {
@@ -273,78 +365,92 @@
         .checkbox-condicion {
             background: white;
             border: 2px solid #ddd;
-            padding: 12px;
-            margin: 8px 0;
-            border-radius: 5px;
+            padding: 15px;
+            margin: 12px 0;
+            border-radius: 12px;
             display: flex;
             align-items: flex-start;
-            gap: 10px;
+            gap: 12px;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .checkbox-condicion:hover {
+            transform: translateX(5px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
         }
 
         .checkbox-condicion.obligatoria {
             border-color: #FFD700;
-            background: #FFFEF0;
+            background: linear-gradient(135deg, #FFFEF0 0%, #FFFACD 100%);
         }
 
         .checkbox-condicion.opcional {
-            border-color: #CCC;
-            background: #F9F9F9;
+            border-color: #3498db;
+            background: linear-gradient(135deg, #F0F8FF 0%, #E6F2FF 100%);
         }
 
         .checkbox-condicion input[type="checkbox"] {
-            width: 22px;
-            height: 22px;
+            width: 24px;
+            height: 24px;
             margin-top: 2px;
             cursor: pointer;
             flex-shrink: 0;
+            accent-color: #27ae60;
         }
 
         .checkbox-condicion label {
             font-size: 13px;
-            line-height: 1.5;
+            line-height: 1.6;
             cursor: pointer;
             flex: 1;
         }
 
         .checkbox-condicion label strong {
             color: #0033A0;
+            font-size: 14px;
         }
 
         .nota-adicional {
-            background: #D6EAF8;
-            border-left: 4px solid #3A9AD9;
-            padding: 12px;
-            margin-top: 15px;
+            background: linear-gradient(135deg, #D6EAF8 0%, #AED6F1 100%);
+            border-left: 5px solid #3A9AD9;
+            padding: 15px;
+            margin-top: 20px;
             font-size: 12px;
-            line-height: 1.6;
-            color: #333;
+            line-height: 1.7;
+            color: #1a5490;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
 
-        /* Firma */
+        /* Firma moderna */
         .firma-container {
-            margin-top: 20px;
-            padding: 15px;
+            margin-top: 25px;
+            padding: 20px;
             background: white;
             border: 3px dashed #3A9AD9;
-            border-radius: 8px;
+            border-radius: 15px;
+            box-shadow: 0 3px 15px rgba(0,0,0,0.1);
         }
 
         .firma-label {
             font-weight: bold;
             color: #0033A0;
-            margin-bottom: 10px;
+            margin-bottom: 15px;
             display: block;
-            font-size: 14px;
+            font-size: 15px;
+            text-align: center;
         }
 
         #signature-pad {
-            border: 2px solid #0033A0;
-            border-radius: 5px;
+            border: 3px solid #3498db;
+            border-radius: 12px;
             cursor: crosshair;
             width: 100%;
-            height: 180px;
-            background: white;
+            height: 200px;
+            background: #fafafa;
             touch-action: none;
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.05);
         }
 
         .firma-buttons {
@@ -354,99 +460,230 @@
             justify-content: center;
         }
 
-        /* Botones */
+        /* Botones modernos */
         .btn {
-            padding: 12px 30px;
+            padding: 14px 35px;
             border: none;
-            border-radius: 5px;
+            border-radius: 12px;
             font-size: 15px;
             font-weight: bold;
             cursor: pointer;
-            transition: all 0.3s;
-            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 25px rgba(0,0,0,0.3);
+        }
+
+        .btn:active {
+            transform: translateY(-1px);
         }
 
         .btn-limpiar {
-            background: #e74c3c;
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
             color: white;
-        }
-
-        .btn-limpiar:hover {
-            background: #c0392b;
-            transform: translateY(-2px);
         }
 
         .btn-guardar {
-            background: #27ae60;
+            background: linear-gradient(135deg, #27ae60 0%, #229954 100%);
             color: white;
-        }
-
-        .btn-guardar:hover {
-            background: #229954;
-            transform: translateY(-2px);
         }
 
         .btn-pdf {
-            background: #FF6600;
+            background: linear-gradient(135deg, #FF6600 0%, #E55A00 100%);
             color: white;
-        }
-
-        .btn-pdf:hover {
-            background: #E55A00;
-            transform: translateY(-2px);
         }
 
         .action-buttons {
             display: flex;
             gap: 15px;
             justify-content: center;
-            margin: 25px 0;
+            margin: 30px 0;
             flex-wrap: wrap;
         }
 
-        /* Alertas */
+        /* Alertas mejoradas */
         .alert {
-            padding: 15px;
-            margin: 15px 0;
-            border-radius: 5px;
-            font-weight: bold;
+            padding: 18px 20px;
+            margin: 20px 0;
+            border-radius: 12px;
+            font-weight: 600;
             display: none;
+            animation: slideIn 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .alert-error {
-            background: #f8d7da;
+            background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
             color: #721c24;
-            border: 2px solid #f5c6cb;
+            border-left: 5px solid #c0392b;
         }
 
         .alert-success {
-            background: #d4edda;
+            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
             color: #155724;
-            border: 2px solid #c3e6cb;
+            border-left: 5px solid #27ae60;
         }
 
         .alert.show {
-            display: block;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
-        /* Responsive */
+        /* Info badge para pruebas deshabilitadas */
+        .info-badge {
+            display: inline-block;
+            padding: 8px 15px;
+            background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);
+            color: white;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 10px rgba(9, 132, 227, 0.3);
+        }
+
+        /* Responsive optimizado para móviles */
         @media (max-width: 768px) {
+            body {
+                padding: 5px;
+            }
+
+            .container {
+                border-radius: 10px;
+            }
+
+            .form-content {
+                padding: 15px;
+            }
+
+            .header-table td {
+                padding: 10px;
+            }
+
+            .logo-cell {
+                width: 80px;
+            }
+
+            .logo-img {
+                max-width: 60px;
+            }
+
+            .title-cell h1 {
+                font-size: 16px;
+            }
+
+            .title-cell h2 {
+                font-size: 12px;
+            }
+
+            .code-cell {
+                width: 90px;
+            }
+
+            .code-cell div {
+                font-size: 10px;
+            }
+
+            .datos-grid {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+
             .checkbox-grid {
                 grid-template-columns: 1fr;
             }
 
-            .datos-basicos th,
-            .datos-basicos td {
-                display: block;
+            .radio-group {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .radio-item {
                 width: 100%;
             }
 
-            .action-buttons {
-                flex-direction: column;
+            .tabla-inspeccion th,
+            .tabla-inspeccion td {
+                padding: 10px 8px;
+                font-size: 12px;
+            }
+
+            .tabla-inspeccion td.radio-cell {
+                width: 50px;
+            }
+
+            .section-content {
+                padding: 15px;
+            }
+
+            .condiciones-section {
+                padding: 15px;
+            }
+
+            .condiciones-titulo {
+                margin: -15px -15px 15px -15px;
+                padding: 12px 15px;
+                font-size: 13px;
+            }
+
+            .checkbox-condicion {
+                padding: 12px;
+            }
+
+            #signature-pad {
+                height: 150px;
             }
 
             .btn {
                 width: 100%;
+                padding: 15px 20px;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+                gap: 12px;
+            }
+
+            .turno-display {
+                font-size: 24px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .title-cell h1 {
+                font-size: 14px;
+            }
+
+            .title-cell h2 {
+                font-size: 11px;
+            }
+
+            .section-title {
+                font-size: 13px;
+                padding: 12px 15px;
+            }
+
+            .tabla-inspeccion th,
+            .tabla-inspeccion td {
+                font-size: 11px;
+                padding: 8px 5px;
             }
         }
 
@@ -458,10 +695,15 @@
 
             .container {
                 box-shadow: none;
+                border-radius: 0;
             }
 
-            .btn, .firma-buttons {
+            .btn, .firma-buttons, .action-buttons {
                 display: none !important;
+            }
+
+            .section {
+                break-inside: avoid;
             }
 
             @page {
@@ -477,7 +719,9 @@
         <table class="header-table">
             <tr>
                 <td class="logo-cell">
-                    <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTIwIiBoZWlnaHQ9IjEwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSI2MCIgY3k9IjUwIiByPSI0NSIgZmlsbD0iIzAwMzNBMCIvPjx0ZXh0IHg9IjUwJSIgeT0iNDUlIiBmb250LXNpemU9IjI0IiBmaWxsPSJ3aGl0ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXdlaWdodD0iYm9sZCI+Q0RBPC90ZXh0Pjx0ZXh0IHg9IjUwJSIgeT0iNzAlIiBmb250LXNpemU9IjEwIiBmaWxsPSJ3aGl0ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXdlaWdodD0iYm9sZCI+QkFSUkFOQ0FCRVJNRU9BPC90ZXh0Pjwvc3ZnPg==" alt="Logo CDA" class="logo-img">
+                    <div class="logo-container">
+                        <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9ImdyYWQiIHgxPSIwJSIgeTE9IjAlIiB4Mj0iMTAwJSIgeTI9IjEwMCUiPjxzdG9wIG9mZnNldD0iMCUiIHN0eWxlPSJzdG9wLWNvbG9yOiMwMDMzQTA7c3RvcC1vcGFjaXR5OjEiIC8+PHN0b3Agb2Zmc2V0PSIxMDAlIiBzdHlsZT0ic3RvcC1jb2xvcjojMDA1NUNDO3N0b3Atb3BhY2l0eToxIiAvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjxjaXJjbGUgY3g9IjUwIiBjeT0iNTAiIHI9IjQ1IiBmaWxsPSJ1cmwoI2dyYWQpIi8+PHRleHQgeD0iNTAlIiB5PSI0MCUiIGZvbnQtc2l6ZT0iMjQiIGZpbGw9IndoaXRlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtd2VpZ2h0PSJib2xkIj5DREE8L3RleHQ+PHRleHQgeD0iNTAlIiB5PSI2NSUiIGZvbnQtc2l6ZT0iOCIgZmlsbD0iI0ZGRDcwMCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXdlaWdodD0iYm9sZCI+QkFSUkFOQ0FCRVJNRU9BPC90ZXh0Pjwvc3ZnPg==" alt="Logo CDA" class="logo-img">
+                    </div>
                 </td>
                 <td class="title-cell">
                     <h1>CDA BARRANCABERMEJA</h1>
@@ -491,458 +735,488 @@
             </tr>
         </table>
 
-        <!-- Alerta -->
-        <div id="alert-container"></div>
+        <div class="form-content">
+            <!-- Alerta -->
+            <div id="alert-container"></div>
 
-        <!-- Datos Básicos -->
-        <table class="datos-basicos">
-            <tr>
-                <th>Fecha</th>
-                <th>Hora</th>
-                <th>Placa</th>
-                <th>Visita</th>
-                <th>Vehículo Preparado</th>
-                <th>Turno</th>
-            </tr>
-            <tr>
-                <td><input type="date" id="fecha" required></td>
-                <td><input type="time" id="hora" required></td>
-                <td><input type="text" id="placa" placeholder="ABC123" required style="text-transform: uppercase;"></td>
-                <td>
-                    <div class="radio-group">
-                        <div class="radio-item">
-                            <input type="radio" id="visita1" name="visita" value="1" checked>
-                            <label for="visita1">1ª</label>
+            <!-- Sección 1: Datos Básicos -->
+            <div class="section">
+                <div class="section-title">📋 DATOS BÁSICOS DE RECEPCIÓN</div>
+                <div class="section-content">
+                    <div class="datos-grid">
+                        <div class="form-group">
+                            <label>Fecha *</label>
+                            <input type="date" id="fecha" required>
                         </div>
-                        <div class="radio-item">
-                            <input type="radio" id="visita2" name="visita" value="2">
-                            <label for="visita2">2ª</label>
+                        <div class="form-group">
+                            <label>Hora *</label>
+                            <input type="time" id="hora" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Placa *</label>
+                            <input type="text" id="placa" placeholder="ABC123" required style="text-transform: uppercase;">
+                        </div>
+                        <div class="form-group">
+                            <label>Turno</label>
+                            <div class="turno-display" id="turno-display">18 18-1</div>
                         </div>
                     </div>
-                </td>
-                <td>
-                    <div class="radio-group">
-                        <div class="radio-item">
-                            <input type="radio" id="prep-si" name="preparado" value="si" checked>
-                            <label for="prep-si">Sí</label>
-                        </div>
-                        <div class="radio-item">
-                            <input type="radio" id="prep-no" name="preparado" value="no">
-                            <label for="prep-no">No</label>
+
+                    <div class="form-group">
+                        <label>Visita *</label>
+                        <div class="radio-group">
+                            <div class="radio-item">
+                                <input type="radio" id="visita1" name="visita" value="1" checked onchange="togglePruebasMecanizadas()">
+                                <label for="visita1">Primera Vez (1ª Visita)</label>
+                            </div>
+                            <div class="radio-item">
+                                <input type="radio" id="visita2" name="visita" value="2" onchange="togglePruebasMecanizadas()">
+                                <label for="visita2">Segunda Vez (2ª Visita)</label>
+                            </div>
                         </div>
                     </div>
-                </td>
-                <td><div class="turno-especial" id="turno-display">18 18-1</div></td>
-            </tr>
-        </table>
 
-        <!-- Marca y Color -->
-        <table class="datos-basicos" style="margin-top: 5px;">
-            <tr>
-                <th>Marca</th>
-                <th colspan="2">Color</th>
-                <th>Prueba(s) Mecanizadas a Realizar</th>
-                <th>Vehículo Público</th>
-            </tr>
-            <tr>
-                <td><input type="text" id="marca" placeholder="Toyota"></td>
-                <td colspan="2"><input type="text" id="color" placeholder="Blanco"></td>
-                <td>
-                    <div class="checkbox-grid" style="grid-template-columns: repeat(2, 1fr);">
-                        <div class="checkbox-item">
-                            <input type="checkbox" id="prueba-alineacion">
-                            <label for="prueba-alineacion">Alineación</label>
-                        </div>
-                        <div class="checkbox-item">
-                            <input type="checkbox" id="prueba-frenos">
-                            <label for="prueba-frenos">Frenos</label>
-                        </div>
-                        <div class="checkbox-item">
-                            <input type="checkbox" id="prueba-gases">
-                            <label for="prueba-gases">Gases</label>
-                        </div>
-                        <div class="checkbox-item">
-                            <input type="checkbox" id="prueba-suspension">
-                            <label for="prueba-suspension">Suspensión</label>
-                        </div>
-                        <div class="checkbox-item">
-                            <input type="checkbox" id="prueba-luces">
-                            <label for="prueba-luces">Luces</label>
-                        </div>
-                        <div class="checkbox-item">
-                            <input type="checkbox" id="prueba-opacidad">
-                            <label for="prueba-opacidad">Opacidad</label>
+                    <div class="form-group">
+                        <label>Vehículo Preparado *</label>
+                        <div class="radio-group">
+                            <div class="radio-item">
+                                <input type="radio" id="prep-si" name="preparado" value="si" checked>
+                                <label for="prep-si">✅ Sí</label>
+                            </div>
+                            <div class="radio-item">
+                                <input type="radio" id="prep-no" name="preparado" value="no">
+                                <label for="prep-no">❌ No</label>
+                            </div>
                         </div>
                     </div>
-                </td>
-                <td>
-                    <div style="text-align: center; margin-bottom: 5px; font-size: 12px;">Nº de Sillas:</div>
-                    <input type="number" id="num-sillas" placeholder="5" min="1" style="margin-bottom: 10px;">
-                    <div style="font-size: 12px; margin-bottom: 5px;">Cumple:</div>
-                    <div class="radio-group" style="justify-content: center;">
-                        <div class="radio-item">
-                            <input type="radio" id="cumple-si" name="cumple" value="si">
-                            <label for="cumple-si">Sí</label>
-                        </div>
-                        <div class="radio-item">
-                            <input type="radio" id="cumple-no" name="cumple" value="no" checked>
-                            <label for="cumple-no">No</label>
-                        </div>
-                    </div>
-                </td>
-            </tr>
-        </table>
-
-        <!-- Tabla de Inspección -->
-        <div class="seccion-titulo">Preparación de la Muestra para ser Inspeccionado</div>
-        <table class="tabla-inspeccion">
-            <thead>
-                <tr>
-                    <th style="text-align: left;">Descripción</th>
-                    <th style="width: 60px;">Sí</th>
-                    <th style="width: 60px;">No</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>Vehículo descargado (vacío)</td>
-                    <td class="radio-cell"><input type="radio" name="insp-1" value="si" checked></td>
-                    <td class="radio-cell"><input type="radio" name="insp-1" value="no"></td>
-                </tr>
-                <tr>
-                    <td>Vehículo limpio</td>
-                    <td class="radio-cell"><input type="radio" name="insp-2" value="si" checked></td>
-                    <td class="radio-cell"><input type="radio" name="insp-2" value="no"></td>
-                </tr>
-                <tr>
-                    <td>Vehículo sin tapas o copas</td>
-                    <td class="radio-cell"><input type="radio" name="insp-3" value="si" checked></td>
-                    <td class="radio-cell"><input type="radio" name="insp-3" value="no"></td>
-                </tr>
-                <tr>
-                    <td>Alarma desactivada</td>
-                    <td class="radio-cell"><input type="radio" name="insp-4" value="si" checked></td>
-                    <td class="radio-cell"><input type="radio" name="insp-4" value="no"></td>
-                </tr>
-                <tr>
-                    <td>Licencia de tránsito del vehículo</td>
-                    <td class="radio-cell"><input type="radio" name="insp-5" value="si" checked></td>
-                    <td class="radio-cell"><input type="radio" name="insp-5" value="no"></td>
-                </tr>
-                <tr>
-                    <td>Certificado de gas natural vigente (vehículos convertidos)</td>
-                    <td class="radio-cell"><input type="radio" name="insp-6" value="si"></td>
-                    <td class="radio-cell"><input type="radio" name="insp-6" value="no" checked></td>
-                </tr>
-                <tr>
-                    <td>Llanta de repuesto visible</td>
-                    <td class="radio-cell"><input type="radio" name="insp-7" value="si" checked></td>
-                    <td class="radio-cell"><input type="radio" name="insp-7" value="no"></td>
-                </tr>
-                <tr>
-                    <td>Correcta presión de los neumáticos</td>
-                    <td class="radio-cell"><input type="radio" name="insp-8" value="si" checked></td>
-                    <td class="radio-cell"><input type="radio" name="insp-8" value="no"></td>
-                </tr>
-                <tr>
-                    <td>Correcto funcionamiento de al menos una luz del vehículo</td>
-                    <td class="radio-cell"><input type="radio" name="insp-9" value="si" checked></td>
-                    <td class="radio-cell"><input type="radio" name="insp-9" value="no"></td>
-                </tr>
-                <tr>
-                    <td>Vehículo sin candado o carpa suelta (Si Aplica)</td>
-                    <td class="radio-cell"><input type="radio" name="insp-10" value="si" checked></td>
-                    <td class="radio-cell"><input type="radio" name="insp-10" value="no"></td>
-                </tr>
-                <tr>
-                    <td>Indicador de nivel de líquido de frenos de la moto visible (Si Aplica)</td>
-                    <td class="radio-cell"><input type="radio" name="insp-11" value="si"></td>
-                    <td class="radio-cell"><input type="radio" name="insp-11" value="no" checked></td>
-                </tr>
-                <tr>
-                    <td>Motocicleta de transmisión automática con soporte central</td>
-                    <td class="radio-cell"><input type="radio" name="insp-12" value="si"></td>
-                    <td class="radio-cell"><input type="radio" name="insp-12" value="no" checked></td>
-                </tr>
-                <tr>
-                    <td>Motocicleta con porta casco o maletero vacío (si aplica)</td>
-                    <td class="radio-cell"><input type="radio" name="insp-13" value="si"></td>
-                    <td class="radio-cell"><input type="radio" name="insp-13" value="no" checked></td>
-                </tr>
-                <tr>
-                    <td>Vehículo Bicombustible operando a gasolina (Si aplica)</td>
-                    <td class="radio-cell"><input type="radio" name="insp-14" value="si"></td>
-                    <td class="radio-cell"><input type="radio" name="insp-14" value="no" checked></td>
-                </tr>
-                <tr>
-                    <td>Vehículo en modo inspección (Si aplica, híbridos)</td>
-                    <td class="radio-cell"><input type="radio" name="insp-15" value="si"></td>
-                    <td class="radio-cell"><input type="radio" name="insp-15" value="no" checked></td>
-                </tr>
-            </tbody>
-        </table>
-
-        <!-- Clase de Vehículo -->
-        <div class="seccion-titulo" style="margin-top: 15px;">Clase de Vehículo</div>
-        <table class="detalle-vehiculo">
-            <tr>
-                <td colspan="4">
-                    <div class="radio-group" style="justify-content: space-around;">
-                        <div class="radio-item">
-                            <input type="radio" id="clase-auto" name="clase" value="auto" checked>
-                            <label for="clase-auto">Auto</label>
-                        </div>
-                        <div class="radio-item">
-                            <input type="radio" id="clase-camioneta" name="clase" value="camioneta">
-                            <label for="clase-camioneta">Camioneta</label>
-                        </div>
-                        <div class="radio-item">
-                            <input type="radio" id="clase-campero" name="clase" value="campero">
-                            <label for="clase-campero">Campero</label>
-                        </div>
-                        <div class="radio-item">
-                            <input type="radio" id="clase-moto" name="clase" value="moto">
-                            <label for="clase-moto">Moto 4T</label>
-                        </div>
-                        <div class="radio-item">
-                            <input type="radio" id="clase-otro" name="clase" value="otro">
-                            <label for="clase-otro">Otro</label>
-                        </div>
-                    </div>
-                </td>
-            </tr>
-        </table>
-
-        <!-- Tipo de Servicio -->
-        <div class="seccion-titulo" style="margin-top: 10px;">Tipo de Servicio</div>
-        <table class="detalle-vehiculo">
-            <tr>
-                <td>
-                    <div class="radio-group" style="justify-content: space-around;">
-                        <div class="radio-item">
-                            <input type="radio" id="servicio-particular" name="servicio" value="particular" checked>
-                            <label for="servicio-particular">Particular</label>
-                        </div>
-                        <div class="radio-item">
-                            <input type="radio" id="servicio-oficial" name="servicio" value="oficial">
-                            <label for="servicio-oficial">Oficial</label>
-                        </div>
-                        <div class="radio-item">
-                            <input type="radio" id="servicio-publico" name="servicio" value="publico">
-                            <label for="servicio-publico">Público</label>
-                        </div>
-                        <div class="radio-item">
-                            <input type="radio" id="servicio-otro" name="servicio" value="otro">
-                            <label for="servicio-otro">Otro</label>
-                        </div>
-                    </div>
-                </td>
-            </tr>
-        </table>
-
-        <!-- Tipo de Combustible -->
-        <div class="seccion-titulo" style="margin-top: 10px;">Tipo de Combustible</div>
-        <table class="detalle-vehiculo">
-            <tr>
-                <td>
-                    <div class="radio-group" style="justify-content: space-around;">
-                        <div class="radio-item">
-                            <input type="radio" id="comb-gasolina" name="combustible" value="gasolina" checked>
-                            <label for="comb-gasolina">Gasolina</label>
-                        </div>
-                        <div class="radio-item">
-                            <input type="radio" id="comb-gas" name="combustible" value="gas">
-                            <label for="comb-gas">Gas</label>
-                        </div>
-                        <div class="radio-item">
-                            <input type="radio" id="comb-diesel" name="combustible" value="diesel">
-                            <label for="comb-diesel">Diesel</label>
-                        </div>
-                        <div class="radio-item">
-                            <input type="radio" id="comb-electrico" name="combustible" value="electrico">
-                            <label for="comb-electrico">Eléctrico</label>
-                        </div>
-                        <div class="radio-item">
-                            <input type="radio" id="comb-otro" name="combustible" value="otro">
-                            <label for="comb-otro">Otro</label>
-                        </div>
-                    </div>
-                </td>
-            </tr>
-        </table>
-
-        <!-- Campos adicionales -->
-        <table class="datos-basicos" style="margin-top: 10px;">
-            <tr>
-                <th>Certificado GNV N°</th>
-                <th>F. Vigilancia:</th>
-                <th>Tipo de Carrocería</th>
-                <th>Blindaje</th>
-                <th>Tracción 4x4</th>
-            </tr>
-            <tr>
-                <td><input type="text" id="cert-gnv" placeholder="Si aplica"></td>
-                <td><input type="date" id="f-vigilancia"></td>
-                <td>
-                    <select id="tipo-carroceria" style="width: 100%; padding: 6px;">
-                        <option value="">Seleccione...</option>
-                        <option value="sedan">Sedán</option>
-                        <option value="hatchback">Hatchback</option>
-                        <option value="suv">SUV</option>
-                        <option value="pickup">Pickup</option>
-                        <option value="van">Van</option>
-                        <option value="otro">Otro</option>
-                    </select>
-                </td>
-                <td>
-                    <div class="radio-group">
-                        <div class="radio-item">
-                            <input type="radio" id="blindaje-si" name="blindaje" value="si">
-                            <label for="blindaje-si">Sí</label>
-                        </div>
-                        <div class="radio-item">
-                            <input type="radio" id="blindaje-no" name="blindaje" value="no" checked>
-                            <label for="blindaje-no">No</label>
-                        </div>
-                    </div>
-                </td>
-                <td>
-                    <div class="radio-group">
-                        <div class="radio-item">
-                            <input type="radio" id="traccion-si" name="traccion" value="si">
-                            <label for="traccion-si">Sí</label>
-                        </div>
-                        <div class="radio-item">
-                            <input type="radio" id="traccion-no" name="traccion" value="no" checked>
-                            <label for="traccion-no">No</label>
-                        </div>
-                    </div>
-                </td>
-            </tr>
-        </table>
-
-        <!-- Código de Alarma -->
-        <div class="seccion-titulo" style="margin-top: 10px;">Código Alarma</div>
-        <table class="detalle-vehiculo">
-            <tr>
-                <td style="padding: 15px;">
-                    <input type="text" id="codigo-alarma" placeholder="Si su vehículo automotor cuenta con sistema de seguridad, por favor desactívelo" style="width: 100%; padding: 10px; font-size: 13px;">
-                    <div style="margin-top: 10px; font-size: 12px; font-style: italic; color: #555;">
-                        Señor Recepcionista registre a continuación las presiones de las llantas del vehículo y el estado en que ingresa usando las convenciones indicadas.
-                    </div>
-                </td>
-            </tr>
-        </table>
-
-        <!-- Sección de Condiciones y Firma -->
-        <div class="condiciones-section">
-            <div class="condiciones-titulo">
-                ✍️ ACEPTACIÓN DE CONDICIONES Y FIRMA
-            </div>
-
-            <div class="condiciones-alerta">
-                <h3>⚠️ CONDICIONES IMPORTANTES - Seleccione las que aplican</h3>
-            </div>
-
-            <!-- Checkboxes Obligatorios -->
-            <div class="checkbox-condicion obligatoria">
-                <input type="checkbox" id="cond-obligatoria-1" class="check-obligatorio" required>
-                <label for="cond-obligatoria-1">
-                    <strong>🟢 OBLIGATORIA:</strong> Señor cliente (o usuario), las condiciones al ingresar del vehículo señaladas son ciertas
-                </label>
-            </div>
-
-            <div class="checkbox-condicion obligatoria">
-                <input type="checkbox" id="cond-obligatoria-2" class="check-obligatorio" required>
-                <label for="cond-obligatoria-2">
-                    <strong>🟢 OBLIGATORIA:</strong> Señor cliente, acepta las condiciones en la que salió su vehículo
-                </label>
-            </div>
-
-            <!-- Checkboxes Opcionales -->
-            <div class="checkbox-condicion opcional">
-                <input type="checkbox" id="cond-opcional-1" class="check-opcional">
-                <label for="cond-opcional-1">
-                    <strong>🔵 OPCIONAL:</strong> Acepto que me contacten para gestión comercial, recordatorios de próximo vencimiento
-                </label>
-            </div>
-
-            <div class="checkbox-condicion opcional">
-                <input type="checkbox" id="cond-opcional-2" class="check-opcional">
-                <label for="cond-opcional-2">
-                    <strong>🔵 OPCIONAL:</strong> Acepto el tratamiento de mis datos personales según política de privacidad
-                </label>
-            </div>
-
-            <!-- Nota adicional -->
-            <div class="nota-adicional">
-                <strong>Nota adicional:</strong> El Señor Recepcionista deberá registrar las presiones de las llantas del vehículo y el estado en que ingresa usando las convenciones indicadas. Si su vehículo automotor cuenta con sistema de seguridad, por favor desactívelo.
-            </div>
-
-            <!-- Firma del Cliente -->
-            <div class="firma-container">
-                <label class="firma-label">Firma del Cliente (use dedo o mouse)</label>
-                <canvas id="signature-pad"></canvas>
-                <div class="firma-buttons">
-                    <button class="btn btn-limpiar" onclick="clearSignature()">🗑️ Limpiar Firma</button>
                 </div>
             </div>
-        </div>
 
-        <!-- Botones de Acción -->
-        <div class="action-buttons">
-            <button class="btn btn-guardar" onclick="saveRecord()">💾 Guardar Registro</button>
-            <button class="btn btn-pdf" onclick="generatePDF()">📄 Exportar a PDF (Oficio)</button>
+            <!-- Sección 2: Datos del Vehículo -->
+            <div class="section">
+                <div class="section-title">🚙 DATOS DEL VEHÍCULO</div>
+                <div class="section-content">
+                    <div class="datos-grid">
+                        <div class="form-group">
+                            <label>Marca</label>
+                            <input type="text" id="marca" placeholder="Toyota">
+                        </div>
+                        <div class="form-group">
+                            <label>Color</label>
+                            <input type="text" id="color" placeholder="Blanco">
+                        </div>
+                        <div class="form-group">
+                            <label>Número de Sillas</label>
+                            <input type="number" id="num-sillas" placeholder="5" min="1">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Clase de Vehículo *</label>
+                        <div class="radio-group">
+                            <div class="radio-item">
+                                <input type="radio" id="clase-auto" name="clase" value="auto" checked>
+                                <label for="clase-auto">🚗 Auto</label>
+                            </div>
+                            <div class="radio-item">
+                                <input type="radio" id="clase-camioneta" name="clase" value="camioneta">
+                                <label for="clase-camioneta">🚙 Camioneta</label>
+                            </div>
+                            <div class="radio-item">
+                                <input type="radio" id="clase-campero" name="clase" value="campero">
+                                <label for="clase-campero">🚐 Campero</label>
+                            </div>
+                            <div class="radio-item">
+                                <input type="radio" id="clase-moto" name="clase" value="moto">
+                                <label for="clase-moto">🏍️ Moto 4T</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Tipo de Servicio *</label>
+                        <div class="radio-group">
+                            <div class="radio-item">
+                                <input type="radio" id="servicio-particular" name="servicio" value="particular" checked>
+                                <label for="servicio-particular">Particular</label>
+                            </div>
+                            <div class="radio-item">
+                                <input type="radio" id="servicio-oficial" name="servicio" value="oficial">
+                                <label for="servicio-oficial">Oficial</label>
+                            </div>
+                            <div class="radio-item">
+                                <input type="radio" id="servicio-publico" name="servicio" value="publico">
+                                <label for="servicio-publico">Público</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Tipo de Combustible *</label>
+                        <div class="radio-group">
+                            <div class="radio-item">
+                                <input type="radio" id="comb-gasolina" name="combustible" value="gasolina" checked>
+                                <label for="comb-gasolina">⛽ Gasolina</label>
+                            </div>
+                            <div class="radio-item">
+                                <input type="radio" id="comb-gas" name="combustible" value="gas">
+                                <label for="comb-gas">🔥 Gas</label>
+                            </div>
+                            <div class="radio-item">
+                                <input type="radio" id="comb-diesel" name="combustible" value="diesel">
+                                <label for="comb-diesel">🛢️ Diesel</label>
+                            </div>
+                            <div class="radio-item">
+                                <input type="radio" id="comb-electrico" name="combustible" value="electrico">
+                                <label for="comb-electrico">⚡ Eléctrico</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sección 3: Pruebas Mecanizadas (Dinámico) -->
+            <div class="section" id="pruebas-section">
+                <div class="section-title">🔧 PRUEBAS MECANIZADAS A REALIZAR</div>
+                <div class="section-content">
+                    <div class="info-badge" id="info-badge">
+                        ℹ️ Las pruebas solo se habilitan en la 2ª Visita
+                    </div>
+                    <div class="checkbox-grid" id="pruebas-container">
+                        <div class="checkbox-item" id="item-alineacion">
+                            <input type="checkbox" id="prueba-alineacion" disabled>
+                            <label for="prueba-alineacion">📐 Alineación</label>
+                        </div>
+                        <div class="checkbox-item" id="item-frenos">
+                            <input type="checkbox" id="prueba-frenos" disabled>
+                            <label for="prueba-frenos">🛑 Frenos</label>
+                        </div>
+                        <div class="checkbox-item" id="item-gases">
+                            <input type="checkbox" id="prueba-gases" disabled>
+                            <label for="prueba-gases">💨 Gases</label>
+                        </div>
+                        <div class="checkbox-item" id="item-suspension">
+                            <input type="checkbox" id="prueba-suspension" disabled>
+                            <label for="prueba-suspension">🔩 Suspensión</label>
+                        </div>
+                        <div class="checkbox-item" id="item-luces">
+                            <input type="checkbox" id="prueba-luces" disabled>
+                            <label for="prueba-luces">💡 Luces</label>
+                        </div>
+                        <div class="checkbox-item" id="item-opacidad">
+                            <input type="checkbox" id="prueba-opacidad" disabled>
+                            <label for="prueba-opacidad">🌫️ Opacidad</label>
+                        </div>
+                    </div>
+
+                    <div class="form-group" style="margin-top: 20px;">
+                        <label>Vehículo Público Cumple</label>
+                        <div class="radio-group">
+                            <div class="radio-item">
+                                <input type="radio" id="cumple-si" name="cumple" value="si">
+                                <label for="cumple-si">✅ Sí</label>
+                            </div>
+                            <div class="radio-item">
+                                <input type="radio" id="cumple-no" name="cumple" value="no" checked>
+                                <label for="cumple-no">❌ No</label>
+                            </div>
+                            <div class="radio-item">
+                                <input type="radio" id="cumple-na" name="cumple" value="na">
+                                <label for="cumple-na">➖ N/A</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sección 4: Preparación de la Muestra -->
+            <div class="section">
+                <div class="section-title">👁️ PREPARACIÓN DE LA MUESTRA PARA SER INSPECCIONADO</div>
+                <div class="section-content">
+                    <table class="tabla-inspeccion">
+                        <thead>
+                            <tr>
+                                <th style="text-align: left;">Descripción</th>
+                                <th style="width: 70px;">Sí</th>
+                                <th style="width: 70px;">No</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Vehículo descargado (vacío)</td>
+                                <td class="radio-cell"><input type="radio" name="insp-1" value="si" checked></td>
+                                <td class="radio-cell"><input type="radio" name="insp-1" value="no"></td>
+                            </tr>
+                            <tr>
+                                <td>Vehículo limpio</td>
+                                <td class="radio-cell"><input type="radio" name="insp-2" value="si" checked></td>
+                                <td class="radio-cell"><input type="radio" name="insp-2" value="no"></td>
+                            </tr>
+                            <tr>
+                                <td>Vehículo sin tapas o copas</td>
+                                <td class="radio-cell"><input type="radio" name="insp-3" value="si" checked></td>
+                                <td class="radio-cell"><input type="radio" name="insp-3" value="no"></td>
+                            </tr>
+                            <tr>
+                                <td>Alarma desactivada</td>
+                                <td class="radio-cell"><input type="radio" name="insp-4" value="si" checked></td>
+                                <td class="radio-cell"><input type="radio" name="insp-4" value="no"></td>
+                            </tr>
+                            <tr>
+                                <td>Licencia de tránsito del vehículo</td>
+                                <td class="radio-cell"><input type="radio" name="insp-5" value="si" checked></td>
+                                <td class="radio-cell"><input type="radio" name="insp-5" value="no"></td>
+                            </tr>
+                            <tr>
+                                <td>Certificado de gas natural vigente (vehículos convertidos)</td>
+                                <td class="radio-cell"><input type="radio" name="insp-6" value="si"></td>
+                                <td class="radio-cell"><input type="radio" name="insp-6" value="no" checked></td>
+                            </tr>
+                            <tr>
+                                <td>Llanta de repuesto visible</td>
+                                <td class="radio-cell"><input type="radio" name="insp-7" value="si" checked></td>
+                                <td class="radio-cell"><input type="radio" name="insp-7" value="no"></td>
+                            </tr>
+                            <tr>
+                                <td>Correcta presión de los neumáticos</td>
+                                <td class="radio-cell"><input type="radio" name="insp-8" value="si" checked></td>
+                                <td class="radio-cell"><input type="radio" name="insp-8" value="no"></td>
+                            </tr>
+                            <tr>
+                                <td>Correcto funcionamiento de al menos una luz del vehículo</td>
+                                <td class="radio-cell"><input type="radio" name="insp-9" value="si" checked></td>
+                                <td class="radio-cell"><input type="radio" name="insp-9" value="no"></td>
+                            </tr>
+                            <tr>
+                                <td>Vehículo sin candado o carpa suelta (Si Aplica)</td>
+                                <td class="radio-cell"><input type="radio" name="insp-10" value="si" checked></td>
+                                <td class="radio-cell"><input type="radio" name="insp-10" value="no"></td>
+                            </tr>
+                            <tr>
+                                <td>Indicador de nivel de líquido de frenos de la moto visible (Si Aplica)</td>
+                                <td class="radio-cell"><input type="radio" name="insp-11" value="si"></td>
+                                <td class="radio-cell"><input type="radio" name="insp-11" value="no" checked></td>
+                            </tr>
+                            <tr>
+                                <td>Motocicleta de transmisión automática con soporte central</td>
+                                <td class="radio-cell"><input type="radio" name="insp-12" value="si"></td>
+                                <td class="radio-cell"><input type="radio" name="insp-12" value="no" checked></td>
+                            </tr>
+                            <tr>
+                                <td>Motocicleta con porta casco o maletero vacío (si aplica)</td>
+                                <td class="radio-cell"><input type="radio" name="insp-13" value="si"></td>
+                                <td class="radio-cell"><input type="radio" name="insp-13" value="no" checked></td>
+                            </tr>
+                            <tr>
+                                <td>Vehículo Bicombustible operando a gasolina (Si aplica)</td>
+                                <td class="radio-cell"><input type="radio" name="insp-14" value="si"></td>
+                                <td class="radio-cell"><input type="radio" name="insp-14" value="no" checked></td>
+                            </tr>
+                            <tr>
+                                <td>Vehículo en modo inspección (Si aplica, híbridos)</td>
+                                <td class="radio-cell"><input type="radio" name="insp-15" value="si"></td>
+                                <td class="radio-cell"><input type="radio" name="insp-15" value="no" checked></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Sección 5: Campos Adicionales -->
+            <div class="section">
+                <div class="section-title">📝 INFORMACIÓN ADICIONAL</div>
+                <div class="section-content">
+                    <div class="datos-grid">
+                        <div class="form-group">
+                            <label>Certificado GNV N°</label>
+                            <input type="text" id="cert-gnv" placeholder="Si aplica">
+                        </div>
+                        <div class="form-group">
+                            <label>F. Vigilancia</label>
+                            <input type="date" id="f-vigilancia">
+                        </div>
+                        <div class="form-group">
+                            <label>Tipo de Carrocería</label>
+                            <select id="tipo-carroceria">
+                                <option value="">Seleccione...</option>
+                                <option value="sedan">Sedán</option>
+                                <option value="hatchback">Hatchback</option>
+                                <option value="suv">SUV</option>
+                                <option value="pickup">Pickup</option>
+                                <option value="van">Van</option>
+                                <option value="otro">Otro</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="datos-grid" style="grid-template-columns: 1fr 1fr;">
+                        <div class="form-group">
+                            <label>Blindaje</label>
+                            <div class="radio-group">
+                                <div class="radio-item">
+                                    <input type="radio" id="blindaje-si" name="blindaje" value="si">
+                                    <label for="blindaje-si">Sí</label>
+                                </div>
+                                <div class="radio-item">
+                                    <input type="radio" id="blindaje-no" name="blindaje" value="no" checked>
+                                    <label for="blindaje-no">No</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Tracción 4x4</label>
+                            <div class="radio-group">
+                                <div class="radio-item">
+                                    <input type="radio" id="traccion-si" name="traccion" value="si">
+                                    <label for="traccion-si">Sí</label>
+                                </div>
+                                <div class="radio-item">
+                                    <input type="radio" id="traccion-no" name="traccion" value="no" checked>
+                                    <label for="traccion-no">No</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Código de Alarma</label>
+                        <input type="text" id="codigo-alarma" placeholder="Si su vehículo tiene alarma, ingrese el código de desactivación">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sección 6: Condiciones y Firma -->
+            <div class="condiciones-section">
+                <div class="condiciones-titulo">
+                    ✍️ ACEPTACIÓN DE CONDICIONES Y FIRMA
+                </div>
+
+                <div class="condiciones-alerta">
+                    <h3>⚠️ CONDICIONES IMPORTANTES - Seleccione las que aplican</h3>
+                </div>
+
+                <!-- Checkboxes Obligatorios -->
+                <div class="checkbox-condicion obligatoria">
+                    <input type="checkbox" id="cond-obligatoria-1" class="check-obligatorio" required>
+                    <label for="cond-obligatoria-1">
+                        <strong>🟢 OBLIGATORIA:</strong> Señor cliente (o usuario), las condiciones al ingresar del vehículo señaladas son ciertas
+                    </label>
+                </div>
+
+                <div class="checkbox-condicion obligatoria">
+                    <input type="checkbox" id="cond-obligatoria-2" class="check-obligatorio" required>
+                    <label for="cond-obligatoria-2">
+                        <strong>🟢 OBLIGATORIA:</strong> Señor cliente, acepta las condiciones en la que salió su vehículo
+                    </label>
+                </div>
+
+                <!-- Checkboxes Opcionales -->
+                <div class="checkbox-condicion opcional">
+                    <input type="checkbox" id="cond-opcional-1" class="check-opcional">
+                    <label for="cond-opcional-1">
+                        <strong>🔵 OPCIONAL:</strong> Acepto que me contacten para gestión comercial, recordatorios de próximo vencimiento
+                    </label>
+                </div>
+
+                <div class="checkbox-condicion opcional">
+                    <input type="checkbox" id="cond-opcional-2" class="check-opcional">
+                    <label for="cond-opcional-2">
+                        <strong>🔵 OPCIONAL:</strong> Acepto el tratamiento de mis datos personales según política de privacidad
+                    </label>
+                </div>
+
+                <!-- Nota adicional -->
+                <div class="nota-adicional">
+                    <strong>📌 Nota adicional:</strong> El Señor Recepcionista deberá registrar las presiones de las llantas del vehículo y el estado en que ingresa usando las convenciones indicadas. Si su vehículo automotor cuenta con sistema de seguridad, por favor desactívelo.
+                </div>
+
+                <!-- Firma del Cliente -->
+                <div class="firma-container">
+                    <label class="firma-label">Firma del Cliente (use dedo o mouse)</label>
+                    <canvas id="signature-pad"></canvas>
+                    <div class="firma-buttons">
+                        <button class="btn btn-limpiar" onclick="clearSignature()">🗑️ Limpiar Firma</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Botones de Acción -->
+            <div class="action-buttons">
+                <button class="btn btn-guardar" onclick="saveRecord()">💾 Guardar Registro</button>
+                <button class="btn btn-pdf" onclick="generatePDF()">📄 Exportar a PDF (Oficio)</button>
+            </div>
         </div>
     </div>
 
     <script>
-        // Configuración de fecha y hora actual
+        // Configuración inicial
         document.addEventListener('DOMContentLoaded', function() {
             const now = new Date();
             document.getElementById('fecha').valueAsDate = now;
             document.getElementById('hora').value = now.toTimeString().slice(0,5);
             
             setupSignaturePad();
+            togglePruebasMecanizadas(); // Inicializar estado
         });
 
+        // Función para habilitar/deshabilitar pruebas mecanizadas según visita
+        function togglePruebasMecanizadas() {
+            const visita = document.querySelector('input[name="visita"]:checked').value;
+            const pruebas = ['alineacion', 'frenos', 'gases', 'suspension', 'luces', 'opacidad'];
+            const infoBadge = document.getElementById('info-badge');
+            
+            if (visita === '1') {
+                // Primera vez: deshabilitar todas las pruebas
+                pruebas.forEach(prueba => {
+                    const checkbox = document.getElementById(`prueba-${prueba}`);
+                    const item = document.getElementById(`item-${prueba}`);
+                    checkbox.disabled = true;
+                    checkbox.checked = false;
+                    item.classList.add('disabled');
+                });
+                infoBadge.style.display = 'inline-block';
+                infoBadge.textContent = 'ℹ️ Las pruebas solo se habilitan en la 2ª Visita';
+                infoBadge.style.background = 'linear-gradient(135deg, #74b9ff 0%, #0984e3 100%)';
+            } else {
+                // Segunda vez: habilitar todas las pruebas
+                pruebas.forEach(prueba => {
+                    const checkbox = document.getElementById(`prueba-${prueba}`);
+                    const item = document.getElementById(`item-${prueba}`);
+                    checkbox.disabled = false;
+                    item.classList.remove('disabled');
+                });
+                infoBadge.style.display = 'inline-block';
+                infoBadge.textContent = '✅ Pruebas habilitadas - Seleccione las que desee realizar';
+                infoBadge.style.background = 'linear-gradient(135deg, #55efc4 0%, #00b894 100%)';
+            }
+        }
+
         // Configurar Canvas para firma
-        let signaturePad;
         function setupSignaturePad() {
             const canvas = document.getElementById('signature-pad');
             const ctx = canvas.getContext('2d');
             
-            // Ajustar tamaño del canvas
             canvas.width = canvas.offsetWidth;
-            canvas.height = 180;
+            canvas.height = 200;
             
             let drawing = false;
             let lastX = 0;
             let lastY = 0;
 
-            canvas.addEventListener('mousedown', startDrawing);
-            canvas.addEventListener('mousemove', draw);
-            canvas.addEventListener('mouseup', stopDrawing);
-            canvas.addEventListener('mouseout', stopDrawing);
-
-            // Soporte táctil
-            canvas.addEventListener('touchstart', handleTouchStart);
-            canvas.addEventListener('touchmove', handleTouchMove);
-            canvas.addEventListener('touchend', stopDrawing);
-
             function startDrawing(e) {
                 drawing = true;
                 const rect = canvas.getBoundingClientRect();
-                lastX = e.clientX - rect.left;
-                lastY = e.clientY - rect.top;
+                lastX = (e.clientX || e.touches[0].clientX) - rect.left;
+                lastY = (e.clientY || e.touches[0].clientY) - rect.top;
             }
 
             function draw(e) {
                 if (!drawing) return;
+                e.preventDefault();
                 
                 const rect = canvas.getBoundingClientRect();
-                const x = e.clientX - rect.left;
-                const y = e.clientY - rect.top;
+                const x = (e.clientX || e.touches[0].clientX) - rect.left;
+                const y = (e.clientY || e.touches[0].clientY) - rect.top;
 
                 ctx.beginPath();
                 ctx.moveTo(lastX, lastY);
@@ -960,35 +1234,14 @@
                 drawing = false;
             }
 
-            function handleTouchStart(e) {
-                e.preventDefault();
-                const touch = e.touches[0];
-                const rect = canvas.getBoundingClientRect();
-                drawing = true;
-                lastX = touch.clientX - rect.left;
-                lastY = touch.clientY - rect.top;
-            }
+            canvas.addEventListener('mousedown', startDrawing);
+            canvas.addEventListener('mousemove', draw);
+            canvas.addEventListener('mouseup', stopDrawing);
+            canvas.addEventListener('mouseout', stopDrawing);
 
-            function handleTouchMove(e) {
-                e.preventDefault();
-                if (!drawing) return;
-                
-                const touch = e.touches[0];
-                const rect = canvas.getBoundingClientRect();
-                const x = touch.clientX - rect.left;
-                const y = touch.clientY - rect.top;
-
-                ctx.beginPath();
-                ctx.moveTo(lastX, lastY);
-                ctx.lineTo(x, y);
-                ctx.strokeStyle = '#000';
-                ctx.lineWidth = 2;
-                ctx.lineCap = 'round';
-                ctx.stroke();
-
-                lastX = x;
-                lastY = y;
-            }
+            canvas.addEventListener('touchstart', startDrawing);
+            canvas.addEventListener('touchmove', draw);
+            canvas.addEventListener('touchend', stopDrawing);
         }
 
         function clearSignature() {
@@ -999,7 +1252,8 @@
 
         function showAlert(message, type) {
             const container = document.getElementById('alert-container');
-            container.innerHTML = `<div class="alert alert-${type} show">${message}</div>`;
+            const icon = type === 'success' ? '✅' : '❌';
+            container.innerHTML = `<div class="alert alert-${type} show">${icon} ${message}</div>`;
             
             setTimeout(() => {
                 container.innerHTML = '';
@@ -1007,17 +1261,15 @@
         }
 
         function validateForm() {
-            // Validar campos obligatorios básicos
             const fecha = document.getElementById('fecha').value;
             const hora = document.getElementById('hora').value;
             const placa = document.getElementById('placa').value;
 
             if (!fecha || !hora || !placa) {
-                showAlert('❌ Por favor complete los campos obligatorios: Fecha, Hora y Placa', 'error');
+                showAlert('Por favor complete los campos obligatorios: Fecha, Hora y Placa', 'error');
                 return false;
             }
 
-            // Validar checkboxes obligatorios
             const checksObligatorios = document.querySelectorAll('.check-obligatorio');
             let todosChecked = true;
 
@@ -1028,18 +1280,17 @@
             });
 
             if (!todosChecked) {
-                showAlert('❌ Debe aceptar todas las condiciones OBLIGATORIAS marcadas en verde', 'error');
+                showAlert('Debe aceptar todas las condiciones OBLIGATORIAS marcadas con 🟢', 'error');
                 return false;
             }
 
-            // Validar firma
             const canvas = document.getElementById('signature-pad');
             const ctx = canvas.getContext('2d');
             const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
             const isEmpty = !imageData.data.some(channel => channel !== 0);
 
             if (isEmpty) {
-                showAlert('❌ Por favor firme el documento antes de guardar', 'error');
+                showAlert('Por favor firme el documento antes de guardar', 'error');
                 return false;
             }
 
@@ -1066,17 +1317,17 @@
                     obligatorias: [],
                     opcionales: []
                 },
-                firma: document.getElementById('signature-pad').toDataURL()
+                firma: document.getElementById('signature-pad').toDataURL(),
+                timestamp: new Date().toISOString()
             };
 
-            // Recopilar pruebas
             ['alineacion', 'frenos', 'gases', 'suspension', 'luces', 'opacidad'].forEach(prueba => {
-                if (document.getElementById(`prueba-${prueba}`).checked) {
+                const checkbox = document.getElementById(`prueba-${prueba}`);
+                if (checkbox.checked && !checkbox.disabled) {
                     data.pruebas.push(prueba);
                 }
             });
 
-            // Recopilar inspecciones
             for (let i = 1; i <= 15; i++) {
                 const selected = document.querySelector(`input[name="insp-${i}"]:checked`);
                 if (selected) {
@@ -1084,7 +1335,6 @@
                 }
             }
 
-            // Recopilar condiciones
             document.querySelectorAll('.check-obligatorio').forEach((check, index) => {
                 data.condiciones.obligatorias.push({
                     id: index + 1,
@@ -1108,16 +1358,11 @@
             }
 
             const data = collectFormData();
-            
-            // Guardar en localStorage
             const registros = JSON.parse(localStorage.getItem('registros-cda') || '[]');
-            registros.push({
-                ...data,
-                timestamp: new Date().toISOString()
-            });
+            registros.push(data);
             localStorage.setItem('registros-cda', JSON.stringify(registros));
 
-            showAlert('✅ Registro guardado exitosamente', 'success');
+            showAlert('Registro guardado exitosamente en el sistema', 'success');
         }
 
         function generatePDF() {
@@ -1125,7 +1370,6 @@
                 return;
             }
 
-            // Ocultar botones antes de capturar
             const buttons = document.querySelectorAll('.btn, .firma-buttons');
             buttons.forEach(btn => btn.style.display = 'none');
 
@@ -1138,8 +1382,6 @@
                 backgroundColor: '#ffffff'
             }).then(canvas => {
                 const { jsPDF } = window.jspdf;
-                
-                // Tamaño oficio: 215.9 x 355.6 mm
                 const pdf = new jsPDF('p', 'mm', 'legal');
                 
                 const imgWidth = 215.9;
@@ -1163,14 +1405,11 @@
                 const fecha = document.getElementById('fecha').value;
                 pdf.save(`Recepcion_CDA_${placa}_${fecha}.pdf`);
 
-                // Restaurar botones
                 buttons.forEach(btn => btn.style.display = '');
-                
-                showAlert('✅ PDF generado exitosamente', 'success');
+                showAlert('PDF generado exitosamente', 'success');
             });
         }
 
-        // Convertir placa a mayúsculas automáticamente
         document.getElementById('placa').addEventListener('input', function(e) {
             e.target.value = e.target.value.toUpperCase();
         });
