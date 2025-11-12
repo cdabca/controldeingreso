@@ -1,1511 +1,367 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Recepción de Vehículos - CDA Barrancabermeja</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            padding: 10px;
-            min-height: 100vh;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 15px 60px rgba(0,0,0,0.3);
-            overflow: hidden;
-        }
-
-        /* Header */
-        .header-table {
-            width: 100%;
-            border-collapse: collapse;
-            background: linear-gradient(135deg, #0033A0 0%, #0055CC 100%);
-        }
-
-        .header-table td {
-            border: none;
-            padding: 20px;
-            vertical-align: middle;
-        }
-
-        .logo-cell {
-            width: 140px;
-            text-align: center;
-        }
-
-        .logo-container {
-            background: white;
-            border-radius: 50%;
-            padding: 15px;
-            display: inline-block;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
-        }
-
-        .logo-img {
-            max-width: 100px;
-            height: auto;
-        }
-
-        .title-cell {
-            text-align: center;
-        }
-
-        .title-cell h1 {
-            font-size: 22px;
-            font-weight: bold;
-            color: white;
-            margin-bottom: 8px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-        }
-
-        .title-cell h2 {
-            font-size: 15px;
-            font-weight: 600;
-            color: #FFD700;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
-        }
-
-        .code-cell {
-            width: 150px;
-            text-align: center;
-            background: rgba(255,255,255,0.1);
-            border-radius: 10px;
-        }
-
-        .code-cell div {
-            font-weight: bold;
-            color: white;
-            font-size: 12px;
-            margin: 4px 0;
-        }
-
-        /* Contenido */
-        .form-content {
-            padding: 25px;
-        }
-
-        .section {
-            margin-bottom: 25px;
-            border: 2px solid #e8ecf1;
-            border-radius: 15px;
-            padding: 0;
-            background: #ffffff;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-            overflow: hidden;
-            transition: all 0.3s ease;
-        }
-
-        .section:hover {
-            box-shadow: 0 6px 25px rgba(0,0,0,0.12);
-            transform: translateY(-2px);
-        }
-
-        .section-title {
-            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
-            color: white;
-            padding: 15px 20px;
-            font-weight: bold;
-            font-size: 15px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .section-content {
-            padding: 20px;
-        }
-
-        .datos-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-bottom: 15px;
-        }
-
-        .form-group {
-            display: flex;
-            flex-direction: column;
-            position: relative;
-        }
-
-        .form-group label {
-            font-weight: 600;
-            margin-bottom: 8px;
-            color: #2c3e50;
-            font-size: 13px;
-        }
-
-        .form-group input,
-        .form-group select {
-            padding: 12px;
-            border: 2px solid #dfe6e9;
-            border-radius: 10px;
-            font-size: 14px;
-            transition: all 0.3s;
-            background: #f8f9fa;
-        }
-
-        .form-group input:focus,
-        .form-group select:focus {
-            outline: none;
-            border-color: #3498db;
-            background: white;
-            box-shadow: 0 0 0 4px rgba(52, 152, 219, 0.1);
-        }
-
-        .form-group input:disabled,
-        .form-group select:disabled {
-            background: #e9ecef;
-            cursor: not-allowed;
-            opacity: 0.6;
-        }
-
-        /* Autocomplete dropdown */
-        .autocomplete-items {
-            position: absolute;
-            border: 2px solid #3498db;
-            border-top: none;
-            z-index: 99;
-            top: 100%;
-            left: 0;
-            right: 0;
-            max-height: 200px;
-            overflow-y: auto;
-            background: white;
-            border-radius: 0 0 10px 10px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
-        }
-
-        .autocomplete-items div {
-            padding: 12px;
-            cursor: pointer;
-            background-color: #fff;
-            border-bottom: 1px solid #e8ecf1;
-            font-size: 14px;
-            transition: all 0.2s;
-        }
-
-        .autocomplete-items div:hover {
-            background-color: #e8f4f8;
-            color: #3498db;
-            font-weight: 600;
-        }
-
-        .autocomplete-active {
-            background-color: #3498db !important;
-            color: white !important;
-        }
-
-        .turno-display {
-            font-size: 28px;
-            font-weight: bold;
-            color: #FF6600;
-            text-align: center;
-            padding: 15px;
-            background: linear-gradient(135deg, #fff5e6 0%, #ffe6cc 100%);
-            border-radius: 10px;
-            margin-top: 8px;
-        }
-
-        /* Radio buttons */
-        .radio-group {
-            display: flex;
-            gap: 15px;
-            flex-wrap: wrap;
-            margin-top: 10px;
-        }
-
-        .radio-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 10px 15px;
-            background: #f8f9fa;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: all 0.3s;
-            border: 2px solid transparent;
-        }
-
-        .radio-item:hover {
-            background: #e8f4f8;
-            border-color: #3498db;
-        }
-
-        .radio-item input[type="radio"] {
-            width: 20px;
-            height: 20px;
-            cursor: pointer;
-            accent-color: #3498db;
-        }
-
-        .radio-item label {
-            font-size: 14px;
-            cursor: pointer;
-            margin: 0;
-        }
-
-        /* Checkboxes */
-        .checkbox-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 12px;
-        }
-
-        .checkbox-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 12px 15px;
-            background: white;
-            border-radius: 10px;
-            border: 2px solid #ecf0f1;
-            transition: all 0.3s;
-            cursor: pointer;
-        }
-
-        .checkbox-item:hover {
-            border-color: #3498db;
-            background: #f0f8ff;
-            transform: translateX(3px);
-        }
-
-        .checkbox-item input[type="checkbox"] {
-            width: 22px;
-            height: 22px;
-            cursor: pointer;
-            accent-color: #3498db;
-        }
-
-        .checkbox-item label {
-            cursor: pointer;
-            font-size: 13px;
-            color: #2c3e50;
-            flex: 1;
-        }
-
-        /* Tabla de inspección */
-        .tabla-inspeccion {
-            width: 100%;
-            border-collapse: collapse;
-            border-radius: 10px;
-            overflow: hidden;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-
-        .tabla-inspeccion th {
-            background: linear-gradient(135deg, #34495e 0%, #2c3e50 100%);
-            color: white;
-            padding: 15px 10px;
-            font-size: 13px;
-            font-weight: bold;
-        }
-
-        .tabla-inspeccion td {
-            padding: 12px 10px;
-            border-bottom: 1px solid #ecf0f1;
-            font-size: 13px;
-        }
-
-        .tabla-inspeccion tr:hover {
-            background: #f8f9fa;
-        }
-
-        .tabla-inspeccion td.radio-cell {
-            text-align: center;
-            width: 70px;
-            background: #f8f9fa;
-        }
-
-        .tabla-inspeccion input[type="radio"] {
-            width: 20px;
-            height: 20px;
-            cursor: pointer;
-            accent-color: #27ae60;
-        }
-
-        /* Tabla de presiones */
-        .presiones-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 15px;
-        }
-
-        .presiones-table th {
-            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
-            color: white;
-            padding: 12px;
-            font-size: 13px;
-            font-weight: bold;
-            border: 1px solid #2980b9;
-        }
-
-        .presiones-table td {
-            padding: 10px;
-            border: 1px solid #dfe6e9;
-            text-align: center;
-        }
-
-        .presiones-table td.label-cell {
-            background: #f8f9fa;
-            font-weight: 600;
-            text-align: left;
-            color: #2c3e50;
-        }
-
-        .presiones-table input[type="number"] {
-            width: 80px;
-            padding: 8px;
-            border: 2px solid #dfe6e9;
-            border-radius: 8px;
-            text-align: center;
-            font-size: 14px;
-            transition: all 0.3s;
-        }
-
-        .presiones-table input[type="number"]:focus {
-            border-color: #3498db;
-            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
-            outline: none;
-        }
-
-        .presiones-table input[type="checkbox"] {
-            width: 20px;
-            height: 20px;
-            cursor: pointer;
-            accent-color: #e74c3c;
-        }
-
-        /* Sección oculta */
-        .hidden {
-            display: none !important;
-        }
-
-        /* Condiciones */
-        .condiciones-section {
-            background: linear-gradient(135deg, #E8F4F8 0%, #D6EAF8 100%);
-            border: none;
-            border-radius: 15px;
-            padding: 25px;
-            margin-top: 20px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
-        }
-
-        .condiciones-titulo {
-            background: linear-gradient(135deg, #3A9AD9 0%, #2E86C1 100%);
-            color: white;
-            padding: 15px 20px;
-            font-weight: bold;
-            font-size: 15px;
-            margin: -25px -25px 20px -25px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            border-radius: 15px 15px 0 0;
-        }
-
-        .condiciones-alerta {
-            background: linear-gradient(135deg, #FFF8DC 0%, #FFEAA7 100%);
-            border: 2px solid #FFD700;
-            padding: 18px;
-            margin-bottom: 20px;
-            border-radius: 12px;
-            box-shadow: 0 3px 10px rgba(255, 215, 0, 0.2);
-        }
-
-        .condiciones-alerta h3 {
-            color: #856404;
-            font-size: 14px;
-            margin-bottom: 10px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .checkbox-condicion {
-            background: white;
-            border: 2px solid #ddd;
-            padding: 15px;
-            margin: 12px 0;
-            border-radius: 12px;
-            display: flex;
-            align-items: flex-start;
-            gap: 12px;
-            transition: all 0.3s ease;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-        }
-
-        .checkbox-condicion:hover {
-            transform: translateX(5px);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-        }
-
-        .checkbox-condicion.obligatoria {
-            border-color: #FFD700;
-            background: linear-gradient(135deg, #FFFEF0 0%, #FFFACD 100%);
-        }
-
-        .checkbox-condicion.opcional {
-            border-color: #3498db;
-            background: linear-gradient(135deg, #F0F8FF 0%, #E6F2FF 100%);
-        }
-
-        .checkbox-condicion input[type="checkbox"] {
-            width: 24px;
-            height: 24px;
-            margin-top: 2px;
-            cursor: pointer;
-            flex-shrink: 0;
-            accent-color: #27ae60;
-        }
-
-        .checkbox-condicion label {
-            font-size: 13px;
-            line-height: 1.6;
-            cursor: pointer;
-            flex: 1;
-        }
-
-        .checkbox-condicion label strong {
-            color: #0033A0;
-            font-size: 14px;
-        }
-
-        .nota-adicional {
-            background: linear-gradient(135deg, #D6EAF8 0%, #AED6F1 100%);
-            border-left: 5px solid #3A9AD9;
-            padding: 15px;
-            margin-top: 20px;
-            font-size: 12px;
-            line-height: 1.7;
-            color: #1a5490;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-
-        /* Firma */
-        .firma-container {
-            margin-top: 25px;
-            padding: 20px;
-            background: white;
-            border: 3px dashed #3A9AD9;
-            border-radius: 15px;
-            box-shadow: 0 3px 15px rgba(0,0,0,0.1);
-        }
-
-        .firma-label {
-            font-weight: bold;
-            color: #0033A0;
-            margin-bottom: 15px;
-            display: block;
-            font-size: 15px;
-            text-align: center;
-        }
-
-        #signature-pad {
-            border: 3px solid #3498db;
-            border-radius: 12px;
-            cursor: crosshair;
-            width: 100%;
-            height: 200px;
-            background: #fafafa;
-            touch-action: none;
-            box-shadow: inset 0 2px 10px rgba(0,0,0,0.05);
-        }
-
-        .firma-buttons {
-            margin-top: 15px;
-            display: flex;
-            gap: 10px;
-            justify-content: center;
-        }
-
-        /* Botones */
-        .btn {
-            padding: 14px 35px;
-            border: none;
-            border-radius: 12px;
-            font-size: 15px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 6px 25px rgba(0,0,0,0.3);
-        }
-
-        .btn:active {
-            transform: translateY(-1px);
-        }
-
-        .btn-limpiar {
-            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
-            color: white;
-        }
-
-        .btn-guardar {
-            background: linear-gradient(135deg, #27ae60 0%, #229954 100%);
-            color: white;
-        }
-
-        .btn-pdf {
-            background: linear-gradient(135deg, #FF6600 0%, #E55A00 100%);
-            color: white;
-        }
-
-        .action-buttons {
-            display: flex;
-            gap: 15px;
-            justify-content: center;
-            margin: 30px 0;
-            flex-wrap: wrap;
-        }
-
-        /* Alertas */
-        .alert {
-            padding: 18px 20px;
-            margin: 20px 0;
-            border-radius: 12px;
-            font-weight: 600;
-            display: none;
-            animation: slideIn 0.3s ease;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
-        }
-
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateY(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .alert-error {
-            background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
-            color: #721c24;
-            border-left: 5px solid #c0392b;
-        }
-
-        .alert-success {
-            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
-            color: #155724;
-            border-left: 5px solid #27ae60;
-        }
-
-        .alert.show {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        /* Loading indicator */
-        .loading {
-            display: inline-block;
-            width: 14px;
-            height: 14px;
-            border: 3px solid rgba(52, 152, 219, 0.3);
-            border-radius: 50%;
-            border-top-color: #3498db;
-            animation: spin 0.8s linear infinite;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        /* Responsive */
-        @media (max-width: 768px) {
-            body {
-                padding: 5px;
-            }
-
-            .container {
-                border-radius: 10px;
-            }
-
-            .form-content {
-                padding: 15px;
-            }
-
-            .header-table td {
-                padding: 10px;
-            }
-
-            .logo-cell {
-                width: 80px;
-            }
-
-            .logo-img {
-                max-width: 60px;
-            }
-
-            .title-cell h1 {
-                font-size: 16px;
-            }
-
-            .title-cell h2 {
-                font-size: 12px;
-            }
-
-            .code-cell {
-                width: 90px;
-            }
-
-            .code-cell div {
-                font-size: 10px;
-            }
-
-            .datos-grid {
-                grid-template-columns: 1fr;
-                gap: 12px;
-            }
-
-            .checkbox-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .radio-group {
-                flex-direction: column;
-                gap: 10px;
-            }
-
-            .radio-item {
-                width: 100%;
-            }
-
-            .tabla-inspeccion th,
-            .tabla-inspeccion td {
-                padding: 10px 8px;
-                font-size: 12px;
-            }
-
-            .presiones-table {
-                font-size: 12px;
-            }
-
-            .presiones-table input[type="number"] {
-                width: 70px;
-                padding: 6px;
-            }
-
-            .section-content {
-                padding: 15px;
-            }
-
-            .condiciones-section {
-                padding: 15px;
-            }
-
-            .condiciones-titulo {
-                margin: -15px -15px 15px -15px;
-                padding: 12px 15px;
-                font-size: 13px;
-            }
-
-            #signature-pad {
-                height: 150px;
-            }
-
-            .btn {
-                width: 100%;
-                padding: 15px 20px;
-            }
-
-            .action-buttons {
-                flex-direction: column;
-                gap: 12px;
-            }
-
-            .turno-display {
-                font-size: 24px;
-            }
-        }
-
-        @media print {
-            body {
-                background: white;
-                padding: 0;
-            }
-
-            .container {
-                box-shadow: none;
-                border-radius: 0;
-            }
-
-            .btn, .firma-buttons, .action-buttons {
-                display: none !important;
-            }
-
-            .section {
-                break-inside: avoid;
-            }
-
-            @page {
-                size: legal;
-                margin: 1.5cm;
-            }
-        }
-    </style>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Recepción CDA - Autocomplete CSV (fix)</title>
+  <style>
+    /* (estilos reducidos para centrarnos en funcionalidad) */
+    body{font-family:Arial,Helvetica,sans-serif;background:#f4f6fb;padding:12px;}
+    .container{max-width:1100px;margin:0 auto;background:#fff;padding:16px;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,.08)}
+    .datos-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:12px}
+    .form-group{position:relative}
+    label{font-weight:600;margin-bottom:6px;display:block}
+    input[type="text"],select,input[type="date"],input[type="time"],input[type="number"]{width:100%;padding:10px;border:1px solid #d7e0ee;border-radius:8px;background:#fbfdff}
+    .autocomplete-items{position:absolute;left:0;right:0;top:100%;z-index:99;border:1px solid #cfe4ff;background:#fff;max-height:240px;overflow:auto;border-radius:0 0 8px 8px;box-shadow:0 8px 20px rgba(15,50,100,.08)}
+    .autocomplete-items div{padding:8px 10px;cursor:pointer;border-bottom:1px solid #eef6ff}
+    .autocomplete-items div:hover{background:#eef9ff;color:#0b76d6;font-weight:600}
+    .hidden{display:none!important}
+    .loading{width:14px;height:14px;border:3px solid #cfe4ff;border-top-color:#0b76d6;border-radius:50%;animation:spin .85s linear infinite;display:inline-block;vertical-align:middle;margin-left:8px}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .tabla-inspeccion{width:100%;border-collapse:collapse;margin-top:8px}
+    .tabla-inspeccion th{background:#0b76d6;color:#fff;padding:8px;text-align:left}
+    .tabla-inspeccion td{padding:8px;border-bottom:1px solid #eef6ff}
+    .alert{padding:10px;border-radius:8px;margin-bottom:12px}
+    .alert-error{background:#fdecea;color:#722}
+    .alert-info{background:#eef9ff;color:#065}
+  </style>
 </head>
 <body>
-    <div class="container" id="printable-area">
-        <!-- Header -->
-        <table class="header-table">
-            <tr>
-                <td class="logo-cell">
-                    <div class="logo-container">
-                        <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9ImdyYWQiIHgxPSIwJSIgeTE9IjAlIiB4Mj0iMTAwJSIgeTI9IjEwMCUiPjxzdG9wIG9mZnNldD0iMCUiIHN0eWxlPSJzdG9wLWNvbG9yOiMwMDMzQTA7c3RvcC1vcGFjaXR5OjEiIC8+PHN0b3Agb2Zmc2V0PSIxMDAlIiBzdHlsZT0ic3RvcC1jb2xvcjojMDA1NUNDO3N0b3Atb3BhY2l0eToxIiAvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjxjaXJjbGUgY3g9IjUwIiBjeT0iNTAiIHI9IjQ1IiBmaWxsPSJ1cmwoI2dyYWQpIi8+PHRleHQgeD0iNTAlIiB5PSI0MCUiIGZvbnQtc2l6ZT0iMjQiIGZpbGw9IndoaXRlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtd2VpZ2h0PSJib2xkIj5DREE8L3RleHQ+PHRleHQgeD0iNTAlIiB5PSI2NSUiIGZvbnQtc2l6ZT0iOCIgZmlsbD0iI0ZGRDcwMCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXdlaWdodD0iYm9sZCI+QkFSUkFOQ0FCRVJNRU9BPC90ZXh0Pjwvc3ZnPg==" alt="Logo CDA" class="logo-img">
-                    </div>
-                </td>
-                <td class="title-cell">
-                    <h1>CDA BARRANCABERMEJA</h1>
-                    <h2>RECEPCIÓN DE VEHÍCULOS LIVIANOS Y MOTOCICLETAS</h2>
-                </td>
-                <td class="code-cell">
-                    <div>CDABR-GST-F-04</div>
-                    <div>VER 14</div>
-                    <div>2024-04-01</div>
-                </td>
-            </tr>
-        </table>
+  <div class="container">
+    <h2>Recepción - CDA BARRANCABERMEJA</h2>
 
-        <div class="form-content">
-            <!-- Alerta -->
-            <div id="alert-container"></div>
+    <div id="status" class="alert alert-info">Cargando datos de autocompletado<span id="loader" class="loading"></span></div>
 
-            <!-- Sección 1: Datos Básicos -->
-            <div class="section">
-                <div class="section-title">📋 DATOS BÁSICOS DE RECEPCIÓN</div>
-                <div class="section-content">
-                    <div class="datos-grid">
-                        <div class="form-group">
-                            <label>Fecha *</label>
-                            <input type="date" id="fecha" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Hora *</label>
-                            <input type="time" id="hora" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Placa *</label>
-                            <input type="text" id="placa" placeholder="ABC123" required style="text-transform: uppercase;">
-                        </div>
-                        <div class="form-group">
-                            <label>Turno</label>
-                            <div class="turno-display" id="turno-display">18 18-1</div>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Visita *</label>
-                        <div class="radio-group">
-                            <div class="radio-item">
-                                <input type="radio" id="visita1" name="visita" value="1" checked onchange="togglePruebasMecanizadas()">
-                                <label for="visita1">Primera Vez (1ª Visita)</label>
-                            </div>
-                            <div class="radio-item">
-                                <input type="radio" id="visita2" name="visita" value="2" onchange="togglePruebasMecanizadas()">
-                                <label for="visita2">Segunda Vez (2ª Visita)</label>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Vehículo Preparado *</label>
-                        <div class="radio-group">
-                            <div class="radio-item">
-                                <input type="radio" id="prep-si" name="preparado" value="si" checked>
-                                <label for="prep-si">✅ Sí</label>
-                            </div>
-                            <div class="radio-item">
-                                <input type="radio" id="prep-no" name="preparado" value="no">
-                                <label for="prep-no">❌ No</label>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Sección 2: Datos del Vehículo -->
-            <div class="section">
-                <div class="section-title">🚙 DATOS DEL VEHÍCULO</div>
-                <div class="section-content">
-                    <div class="datos-grid">
-                        <div class="form-group">
-                            <label>Marca *</label>
-                            <input type="text" id="marca" placeholder="Empiece a digitar..." autocomplete="off">
-                        </div>
-                        <div class="form-group">
-                            <label>Color *</label>
-                            <input type="text" id="color" placeholder="Empiece a digitar..." autocomplete="off">
-                        </div>
-                        <div class="form-group">
-                            <label>Número de Sillas</label>
-                            <input type="number" id="num-sillas" placeholder="5" min="1">
-                        </div>
-                    </div>
-
-                    <div class="datos-grid">
-                        <div class="form-group">
-                            <label>Clase de Vehículo *</label>
-                            <select id="clase-vehiculo" required onchange="updateDynamicFields()">
-                                <option value="">Seleccione...</option>
-                                <option value="auto">🚗 Automóvil</option>
-                                <option value="camioneta">🚙 Camioneta</option>
-                                <option value="campero">🚐 Campero</option>
-                                <option value="moto">🏍️ Motocicleta</option>
-                                <option value="otro">🚛 Otro</option>
-                            </select>
-                        </div>
-
-                        <div class="form-group">
-                            <label>Tipo de Servicio *</label>
-                            <select id="tipo-servicio" required>
-                                <option value="">Seleccione...</option>
-                                <option value="particular">Particular</option>
-                                <option value="oficial">Oficial</option>
-                                <option value="publico">Público</option>
-                                <option value="diplomatico">Diplomático</option>
-                                <option value="otro">Otro</option>
-                            </select>
-                        </div>
-
-                        <div class="form-group">
-                            <label>Tipo de Combustible *</label>
-                            <select id="tipo-combustible" required onchange="toggleCertificadoGNV()">
-                                <option value="">Seleccione...</option>
-                                <option value="gasolina">⛽ Gasolina</option>
-                                <option value="gas-gasolina">🔥 Gas-Gasolina (GNV)</option>
-                                <option value="diesel">🛢️ Diesel</option>
-                                <option value="electrico">⚡ Eléctrico</option>
-                                <option value="hibrido">🔋 Híbrido</option>
-                                <option value="otro">Otro</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="datos-grid">
-                        <div class="form-group">
-                            <label>Carrocería</label>
-                            <input type="text" id="carroceria" placeholder="Empiece a digitar..." autocomplete="off">
-                        </div>
-                    </div>
-
-                    <!-- Campos de GNV (ocultos por defecto) -->
-                    <div id="certificado-gnv-section" class="hidden" style="margin-top: 15px;">
-                        <div class="datos-grid">
-                            <div class="form-group">
-                                <label>Certificado GNV N° *</label>
-                                <input type="text" id="cert-gnv" placeholder="Número de certificado">
-                            </div>
-                            <div class="form-group">
-                                <label>Fecha de Vigencia del Certificado *</label>
-                                <input type="date" id="fecha-vigencia-gnv">
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="datos-grid" style="margin-top: 15px;">
-                        <div class="form-group">
-                            <label>Blindaje</label>
-                            <div class="radio-group">
-                                <div class="radio-item">
-                                    <input type="radio" id="blindaje-si" name="blindaje" value="si">
-                                    <label for="blindaje-si">Sí</label>
-                                </div>
-                                <div class="radio-item">
-                                    <input type="radio" id="blindaje-no" name="blindaje" value="no" checked>
-                                    <label for="blindaje-no">No</label>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label>Tracción 4x4</label>
-                            <div class="radio-group">
-                                <div class="radio-item">
-                                    <input type="radio" id="traccion-si" name="traccion" value="si">
-                                    <label for="traccion-si">Sí</label>
-                                </div>
-                                <div class="radio-item">
-                                    <input type="radio" id="traccion-no" name="traccion" value="no" checked>
-                                    <label for="traccion-no">No</label>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Sección 3: Pruebas Mecanizadas (solo 2ª visita) -->
-            <div class="section hidden" id="pruebas-section">
-                <div class="section-title">🔧 PRUEBAS MECANIZADAS A REALIZAR</div>
-                <div class="section-content">
-                    <div class="checkbox-grid">
-                        <div class="checkbox-item">
-                            <input type="checkbox" id="prueba-alineacion">
-                            <label for="prueba-alineacion">📐 Alineación</label>
-                        </div>
-                        <div class="checkbox-item">
-                            <input type="checkbox" id="prueba-frenos">
-                            <label for="prueba-frenos">🛑 Frenos</label>
-                        </div>
-                        <div class="checkbox-item">
-                            <input type="checkbox" id="prueba-gases">
-                            <label for="prueba-gases">💨 Emisión de Gases</label>
-                        </div>
-                        <div class="checkbox-item">
-                            <input type="checkbox" id="prueba-suspension">
-                            <label for="prueba-suspension">🔩 Suspensión</label>
-                        </div>
-                        <div class="checkbox-item">
-                            <input type="checkbox" id="prueba-luces">
-                            <label for="prueba-luces">💡 Luces</label>
-                        </div>
-                        <div class="checkbox-item">
-                            <input type="checkbox" id="prueba-opacidad">
-                            <label for="prueba-opacidad">🌫️ Opacidad</label>
-                        </div>
-                    </div>
-
-                    <div class="form-group" style="margin-top: 20px;">
-                        <label>Vehículo Público Cumple</label>
-                        <div class="radio-group">
-                            <div class="radio-item">
-                                <input type="radio" id="cumple-si" name="cumple" value="si">
-                                <label for="cumple-si">✅ Sí</label>
-                            </div>
-                            <div class="radio-item">
-                                <input type="radio" id="cumple-no" name="cumple" value="no" checked>
-                                <label for="cumple-no">❌ No</label>
-                            </div>
-                            <div class="radio-item">
-                                <input type="radio" id="cumple-na" name="cumple" value="na">
-                                <label for="cumple-na">➖ N/A</label>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Sección 4: Preparación de la Muestra (Dinámico) -->
-            <div class="section">
-                <div class="section-title">👁️ PREPARACIÓN DE LA MUESTRA PARA SER INSPECCIONADO</div>
-                <div class="section-content">
-                    <table class="tabla-inspeccion" id="tabla-inspeccion">
-                        <!-- Se llenará dinámicamente -->
-                    </table>
-                </div>
-            </div>
-
-            <!-- Sección 5: Presión de Neumáticos -->
-            <div class="section">
-                <div class="section-title">🔧 PRESIÓN DE INFLADO DE NEUMÁTICOS</div>
-                <div class="section-content">
-                    <table class="presiones-table">
-                        <thead>
-                            <tr>
-                                <th>Posición</th>
-                                <th>Presión Inicial (PSI)</th>
-                                <th>Presión Ajustada (PSI)</th>
-                                <th>N/A</th>
-                            </tr>
-                        </thead>
-                        <tbody id="presiones-tbody">
-                            <tr>
-                                <td class="label-cell">🔵 DI - Delantera Izquierda</td>
-                                <td><input type="number" id="presion-di-inicial" step="0.5" placeholder="32" min="0"></td>
-                                <td><input type="number" id="presion-di-ajustada" step="0.5" placeholder="32" min="0"></td>
-                                <td><input type="checkbox" id="na-di" onchange="togglePresion('di')"></td>
-                            </tr>
-                            <tr>
-                                <td class="label-cell">🔵 DD - Delantera Derecha</td>
-                                <td><input type="number" id="presion-dd-inicial" step="0.5" placeholder="32" min="0"></td>
-                                <td><input type="number" id="presion-dd-ajustada" step="0.5" placeholder="32" min="0"></td>
-                                <td><input type="checkbox" id="na-dd" onchange="togglePresion('dd')"></td>
-                            </tr>
-                            <tr>
-                                <td class="label-cell">🔴 TI - Trasera Izquierda</td>
-                                <td><input type="number" id="presion-ti-inicial" step="0.5" placeholder="32" min="0"></td>
-                                <td><input type="number" id="presion-ti-ajustada" step="0.5" placeholder="32" min="0"></td>
-                                <td><input type="checkbox" id="na-ti" onchange="togglePresion('ti')"></td>
-                            </tr>
-                            <tr>
-                                <td class="label-cell">🔴 TD - Trasera Derecha</td>
-                                <td><input type="number" id="presion-td-inicial" step="0.5" placeholder="32" min="0"></td>
-                                <td><input type="number" id="presion-td-ajustada" step="0.5" placeholder="32" min="0"></td>
-                                <td><input type="checkbox" id="na-td" onchange="togglePresion('td')"></td>
-                            </tr>
-                            <tr>
-                                <td class="label-cell">⚪ R - Repuesto</td>
-                                <td><input type="number" id="presion-r-inicial" step="0.5" placeholder="32" min="0"></td>
-                                <td><input type="number" id="presion-r-ajustada" step="0.5" placeholder="32" min="0"></td>
-                                <td><input type="checkbox" id="na-r" onchange="togglePresion('r')"></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- Código de Alarma -->
-            <div class="section">
-                <div class="section-title">🔐 CÓDIGO DE ALARMA</div>
-                <div class="section-content">
-                    <div class="form-group">
-                        <label>Código de Desactivación de Alarma</label>
-                        <input type="text" id="codigo-alarma" placeholder="Si su vehículo tiene alarma, ingrese el código de desactivación">
-                    </div>
-                </div>
-            </div>
-
-            <!-- Sección 6: Condiciones y Firma -->
-            <div class="condiciones-section">
-                <div class="condiciones-titulo">
-                    ✍️ ACEPTACIÓN DE CONDICIONES Y FIRMA
-                </div>
-
-                <div class="condiciones-alerta">
-                    <h3>⚠️ CONDICIONES IMPORTANTES - Seleccione las que aplican</h3>
-                </div>
-
-                <div class="checkbox-condicion obligatoria">
-                    <input type="checkbox" id="cond-obligatoria-1" class="check-obligatorio" required>
-                    <label for="cond-obligatoria-1">
-                        <strong>🟢 OBLIGATORIA:</strong> Señor cliente (o usuario), las condiciones al ingresar del vehículo señaladas son ciertas
-                    </label>
-                </div>
-
-                <div class="checkbox-condicion obligatoria">
-                    <input type="checkbox" id="cond-obligatoria-2" class="check-obligatorio" required>
-                    <label for="cond-obligatoria-2">
-                        <strong>🟢 OBLIGATORIA:</strong> Señor cliente, acepta las condiciones en la que salió su vehículo
-                    </label>
-                </div>
-
-                <div class="checkbox-condicion opcional">
-                    <input type="checkbox" id="cond-opcional-1" class="check-opcional">
-                    <label for="cond-opcional-1">
-                        <strong>🔵 OPCIONAL:</strong> Acepto que me contacten para gestión comercial, recordatorios de próximo vencimiento
-                    </label>
-                </div>
-
-                <div class="checkbox-condicion opcional">
-                    <input type="checkbox" id="cond-opcional-2" class="check-opcional">
-                    <label for="cond-opcional-2">
-                        <strong>🔵 OPCIONAL:</strong> Acepto el tratamiento de mis datos personales según política de privacidad
-                    </label>
-                </div>
-
-                <div class="nota-adicional">
-                    <strong>📌 Nota adicional:</strong> El Señor Recepcionista deberá registrar las presiones de las llantas del vehículo y el estado en que ingresa usando las convenciones indicadas. Si su vehículo automotor cuenta con sistema de seguridad, por favor desactívelo.
-                </div>
-
-                <div class="firma-container">
-                    <label class="firma-label">Firma del Cliente (use dedo o mouse)</label>
-                    <canvas id="signature-pad"></canvas>
-                    <div class="firma-buttons">
-                        <button class="btn btn-limpiar" onclick="clearSignature()">🗑️ Limpiar Firma</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Botones de Acción -->
-            <div class="action-buttons">
-                <button class="btn btn-guardar" onclick="saveRecord()">💾 Guardar Registro</button>
-                <button class="btn btn-pdf" onclick="generatePDF()">📄 Exportar a PDF (Oficio)</button>
-            </div>
+    <div class="section">
+      <div class="section-title">Datos básicos</div>
+      <div class="section-content">
+        <div class="datos-grid">
+          <div class="form-group">
+            <label>Fecha</label>
+            <input id="fecha" type="date">
+          </div>
+          <div class="form-group">
+            <label>Hora</label>
+            <input id="hora" type="time">
+          </div>
+          <div class="form-group">
+            <label>Placa</label>
+            <input id="placa" type="text" style="text-transform:uppercase">
+          </div>
+          <div class="form-group">
+            <label>Turno</label>
+            <input id="turno" type="text" value="18 18-1">
+          </div>
         </div>
+      </div>
     </div>
 
-    <script>
-        // Datos de los CSV
-        let marcasData = [];
-        let coloresData = [];
-        let carroceriasData = [];
+    <div class="section">
+      <div class="section-title">Datos del vehículo</div>
+      <div class="section-content">
+        <div class="datos-grid">
+          <div class="form-group">
+            <label>Marca</label>
+            <input id="marca" type="text" placeholder="Empiece a digitar..." autocomplete="off">
+            <!-- autocomplete container se inyecta aquí -->
+          </div>
 
-        // Items de inspección según tipo de vehículo
-        const itemsInspeccionVehiculo = [
-            { texto: "Vehículo descargado (vacío)", defecto: "si" },
-            { texto: "Vehículo limpio", defecto: "si" },
-            { texto: "Vehículo sin tapas o copas", defecto: "si" },
-            { texto: "Alarma desactivada", defecto: "si" },
-            { texto: "Licencia de tránsito del vehículo", defecto: "si" },
-            { texto: "Certificado de gas natural vigente (vehículos convertidos)", defecto: "no" },
-            { texto: "Llanta de repuesto visible", defecto: "si" },
-            { texto: "Correcta presión de los neumáticos", defecto: "si" },
-            { texto: "Correcto funcionamiento de al menos una luz del vehículo", defecto: "si" },
-            { texto: "Vehículo sin candado o carpa suelta (Si Aplica)", defecto: "si" },
-            { texto: "Vehículo Bicombustible operando a gasolina (Si aplica)", defecto: "no" },
-            { texto: "Vehículo en modo inspección (Si aplica, híbridos)", defecto: "no" }
-        ];
+          <div class="form-group">
+            <label>Color</label>
+            <input id="color" type="text" placeholder="Empiece a digitar..." autocomplete="off">
+          </div>
 
-        const itemsInspeccionMoto = [
-            { texto: "Motocicleta limpia", defecto: "si" },
-            { texto: "Alarma desactivada", defecto: "si" },
-            { texto: "Licencia de tránsito del vehículo", defecto: "si" },
-            { texto: "Correcta presión de los neumáticos", defecto: "si" },
-            { texto: "Correcto funcionamiento de las luces", defecto: "si" },
-            { texto: "Indicador de nivel de líquido de frenos visible (Si Aplica)", defecto: "no" },
-            { texto: "Motocicleta de transmisión automática con soporte central", defecto: "no" },
-            { texto: "Motocicleta con porta casco o maletero vacío (si aplica)", defecto: "no" },
-            { texto: "Espejos retrovisores en buen estado", defecto: "si" }
-        ];
+          <div class="form-group">
+            <label>Carrocería</label>
+            <input id="carroceria" type="text" placeholder="Empiece a digitar..." autocomplete="off">
+          </div>
 
-        // Cargar datos CSV desde el repositorio
-        async function cargarDatosCSV() {
-            try {
-                // Cargar marcas
-                const responseMarcas = await fetch('https://raw.githubusercontent.com/cdabca/controldeingreso/main/marca.csv');
-                const textMarcas = await responseMarcas.text();
-                marcasData = parsearCSV(textMarcas);
+          <div class="form-group">
+            <label>Clase de vehículo</label>
+            <select id="clase-vehiculo">
+              <option value="auto">Automóvil</option>
+              <option value="moto">Motocicleta</option>
+              <option value="camioneta">Camioneta</option>
+              <option value="otro">Otro</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
 
-                // Cargar colores
-                const responseColores = await fetch('https://raw.githubusercontent.com/cdabca/controldeingreso/main/color.csv');
-                const textColores = await responseColores.text();
-                coloresData = parsearCSV(textColores);
+    <div class="section">
+      <div class="section-title">Preparación de la muestra</div>
+      <div id="tabla-wrapper">
+        <table id="tabla-inspeccion" class="tabla-inspeccion"></table>
+      </div>
+    </div>
 
-                // Cargar carrocerías
-                const responseCarrocerias = await fetch('https://raw.githubusercontent.com/cdabca/controldeingreso/main/carroceria.csv');
-                const textCarrocerias = await responseCarrocerias.text();
-                carroceriasData = parsearCSV(textCarrocerias);
+    <div style="margin-top:12px">
+      <button id="btn-guardar">Guardar (prueba)</button>
+    </div>
 
-                console.log('Datos CSV cargados:', {
-                    marcas: marcasData.length,
-                    colores: coloresData.length,
-                    carrocerias: carroceriasData.length
-                });
-            } catch (error) {
-                console.error('Error cargando datos CSV:', error);
-                showAlert('Error al cargar datos de autocompletado', 'error');
-            }
-        }
+    <div style="margin-top:12px" id="debug"></div>
+  </div>
 
-        // Parsear CSV y extraer valores
-        function parsearCSV(texto) {
-            const lineas = texto.split('\n');
-            const datos = [];
-            
-            for (let i = 1; i < lineas.length; i++) { // Saltar encabezado
-                const linea = lineas[i].trim();
-                if (!linea) continue;
-                
-                // Dividir por | y tomar el segundo valor (después del número)
-                const partes = linea.split('|');
-                if (partes.length >= 2) {
-                    const valor = partes[1].trim().replace(/;+$/, ''); // Quitar punto y coma final
-                    if (valor && valor !== '' && !valor.startsWith('﻿')) {
-                        datos.push(valor);
-                    }
-                }
-            }
-            
-            return datos;
-        }
+<script>
+/*
+  Fixes aplicados:
+  - parse CSV robusto (elimina BOM, maneja '|', ';' y ';' finales).
+  - carga desde raw.githubusercontent (si pruebas en local, sirve con http-server o python -m http.server).
+  - inicializa autocomplete y construye tabla de inspección inmediatamente.
+  - añade logs y mensajes de estado visibles.
+*/
 
-        // Función de autocomplete
-        function setupAutocomplete(inputElement, dataArray) {
-            let currentFocus;
+let marcasData = [], coloresData = [], carroceriasData = [];
 
-            inputElement.addEventListener('input', function(e) {
-                let val = this.value;
-                closeAllLists();
-                
-                if (!val) return false;
-                
-                currentFocus = -1;
-                
-                const autocompleteContainer = document.createElement('DIV');
-                autocompleteContainer.setAttribute('class', 'autocomplete-items');
-                this.parentNode.appendChild(autocompleteContainer);
-                
-                let count = 0;
-                const maxResults = 50; // Limitar resultados
-                
-                for (let i = 0; i < dataArray.length; i++) {
-                    if (count >= maxResults) break;
-                    
-                    if (dataArray[i].toUpperCase().includes(val.toUpperCase())) {
-                        const optionDiv = document.createElement('DIV');
-                        
-                        // Resaltar coincidencia
-                        const index = dataArray[i].toUpperCase().indexOf(val.toUpperCase());
-                        optionDiv.innerHTML = dataArray[i].substr(0, index);
-                        optionDiv.innerHTML += '<strong>' + dataArray[i].substr(index, val.length) + '</strong>';
-                        optionDiv.innerHTML += dataArray[i].substr(index + val.length);
-                        
-                        optionDiv.innerHTML += '<input type="hidden" value="' + dataArray[i] + '">';
-                        
-                        optionDiv.addEventListener('click', function(e) {
-                            inputElement.value = this.getElementsByTagName('input')[0].value;
-                            closeAllLists();
-                        });
-                        
-                        autocompleteContainer.appendChild(optionDiv);
-                        count++;
-                    }
-                }
-            });
+async function cargarDatosCSV() {
+  const status = document.getElementById('status');
+  const loader = document.getElementById('loader');
+  status.className = 'alert alert-info';
+  status.textContent = 'Cargando datos de autocompletado';
+  loader.style.display = 'inline-block';
 
-            inputElement.addEventListener('keydown', function(e) {
-                let x = this.parentNode.querySelector('.autocomplete-items');
-                if (x) x = x.getElementsByTagName('div');
-                
-                if (e.keyCode == 40) { // Flecha abajo
-                    currentFocus++;
-                    addActive(x);
-                } else if (e.keyCode == 38) { // Flecha arriba
-                    currentFocus--;
-                    addActive(x);
-                } else if (e.keyCode == 13) { // Enter
-                    e.preventDefault();
-                    if (currentFocus > -1) {
-                        if (x) x[currentFocus].click();
-                    }
-                }
-            });
+  try {
+    // URL raw en repo (asegúrate de que el archivo exista en main)
+    const urls = {
+      marcas: 'https://raw.githubusercontent.com/cdabca/controldeingreso/main/marca.csv',
+      colores: 'https://raw.githubusercontent.com/cdabca/controldeingreso/main/color.csv',
+      carrocerias: 'https://raw.githubusercontent.com/cdabca/controldeingreso/main/carroceria.csv'
+    };
 
-            function addActive(x) {
-                if (!x) return false;
-                removeActive(x);
-                if (currentFocus >= x.length) currentFocus = 0;
-                if (currentFocus < 0) currentFocus = (x.length - 1);
-                x[currentFocus].classList.add('autocomplete-active');
-            }
+    const [rMar, rCol, rCar] = await Promise.all([
+      fetch(urls.marcas),
+      fetch(urls.colores),
+      fetch(urls.carrocerias)
+    ]);
 
-            function removeActive(x) {
-                for (let i = 0; i < x.length; i++) {
-                    x[i].classList.remove('autocomplete-active');
-                }
-            }
+    if (!rMar.ok || !rCol.ok || !rCar.ok) {
+      throw new Error('Fetch falló: ' + [rMar.status, rCol.status, rCar.status].join(','));
+    }
 
-            function closeAllLists(elmnt) {
-                const items = document.getElementsByClassName('autocomplete-items');
-                for (let i = 0; i < items.length; i++) {
-                    if (elmnt != items[i] && elmnt != inputElement) {
-                        items[i].parentNode.removeChild(items[i]);
-                    }
-                }
-            }
+    const [tMar, tCol, tCar] = await Promise.all([rMar.text(), rCol.text(), rCar.text()]);
 
-            document.addEventListener('click', function (e) {
-                closeAllLists(e.target);
-            });
-        }
+    marcasData = parsearCSV(tMar);
+    coloresData = parsearCSV(tCol);
+    carroceriasData = parsearCSV(tCar);
 
-        // Configuración inicial
-        document.addEventListener('DOMContentLoaded', async function() {
-            const now = new Date();
-            document.getElementById('fecha').valueAsDate = now;
-            document.getElementById('hora').value = now.toTimeString().slice(0,5);
-            
-            // Cargar datos CSV
-            await cargarDatosCSV();
-            
-            // Configurar autocomplete
-            setupAutocomplete(document.getElementById('marca'), marcasData);
-            setupAutocomplete(document.getElementById('color'), coloresData);
-            setupAutocomplete(document.getElementById('carroceria'), carroceriasData);
-            
-            setupSignaturePad();
-            updateDynamicFields();
-        });
+    console.log('marcas count', marcasData.length);
+    console.log('colores count', coloresData.length);
+    console.log('carrocerias count', carroceriasData.length);
 
-        // Actualizar campos dinámicos según clase de vehículo
-        function updateDynamicFields() {
-            const claseVehiculo = document.getElementById('clase-vehiculo').value;
-            const tabla = document.getElementById('tabla-inspeccion');
-            
-            if (!claseVehiculo) {
-                tabla.innerHTML = '<tr><td style="text-align: center; padding: 20px; color: #999;">Seleccione una clase de vehículo para mostrar la lista de preparación</td></tr>';
-                return;
-            }
+    // Actualizar status
+    status.textContent = 'Datos cargados: marcas=' + marcasData.length + ' colores=' + coloresData.length + ' carrocerías=' + carroceriasData.length;
+    loader.style.display = 'none';
 
-            const items = (claseVehiculo === 'moto') ? itemsInspeccionMoto : itemsInspeccionVehiculo;
-            
-            let html = `
-                <thead>
-                    <tr>
-                        <th style="text-align: left;">Descripción</th>
-                        <th style="width: 70px;">Sí</th>
-                        <th style="width: 70px;">No</th>
-                    </tr>
-                </thead>
-                <tbody>
-            `;
+    // Si arrays vacíos mostrar aviso
+    if (!marcasData.length || !coloresData.length || !carroceriasData.length) {
+      status.className = 'alert alert-error';
+      status.textContent = 'ATENCIÓN: uno o más CSV se cargaron vacíos. Revisa las rutas o el contenido.';
+    }
+  } catch (err) {
+    console.error('Error cargarDatosCSV:', err);
+    document.getElementById('status').className = 'alert alert-error';
+    document.getElementById('status').textContent = 'Error cargando CSV: ' + (err.message || err);
+    document.getElementById('loader').style.display = 'none';
+  }
+}
 
-            items.forEach((item, index) => {
-                const checkedSi = item.defecto === 'si' ? 'checked' : '';
-                const checkedNo = item.defecto === 'no' ? 'checked' : '';
-                
-                html += `
-                    <tr>
-                        <td>${item.texto}</td>
-                        <td class="radio-cell"><input type="radio" name="insp-${index}" value="si" ${checkedSi}></td>
-                        <td class="radio-cell"><input type="radio" name="insp-${index}" value="no" ${checkedNo}></td>
-                    </tr>
-                `;
-            });
+// parse CSV robusto
+function parsearCSV(texto) {
+  if (!texto) return [];
+  // normalize de finales CRLF
+  texto = texto.replace(/\r/g, '\n');
+  const lineas = texto.split('\n').map(l => l.trim()).filter(l => l.length);
+  const datos = [];
+  for (let i = 0; i < lineas.length; i++) {
+    let linea = lineas[i];
+    // eliminar BOM si existe
+    linea = linea.replace(/^\uFEFF/, '').replace(/^\ufeff/, '').trim();
 
-            html += '</tbody>';
-            tabla.innerHTML = html;
-        }
+    // Intentar separar por '|' (formato visible en repo), si no, por ';' y si no, por coma
+    let partes = linea.split('|');
+    let valor = '';
+    if (partes.length >= 2) {
+      // tomar todo lo que sigue al primer separador '|' por si hay pipes internos
+      valor = partes.slice(1).join('|').trim();
+    } else {
+      partes = linea.split(';');
+      if (partes.length >= 2) valor = partes.slice(1).join(';').trim();
+      else {
+        partes = linea.split(',');
+        if (partes.length >= 2) valor = partes.slice(1).join(',').trim();
+        else valor = partes[0].trim();
+      }
+    }
+    // limpiar caracteres residuales como ; al final o ;; o comillas
+    valor = valor.replace(/;+$/,'').replace(/^;+/, '').trim();
+    // si valor contiene campos separados por ';' al final (ej: "MARCA;;") intentar tomar primer token alfabético
+    if (!valor && partes.length >= 2) {
+      // fallback: tomar la segunda columna antes de cualquier ';'
+      valor = partes[1] ? partes[1].split(';')[0].trim() : '';
+    }
+    // filtrar encabezados genéricos
+    if (!valor) continue;
+    const valUpper = valor.toUpperCase();
+    if (valUpper === 'MARCA' || valUpper === 'COLOR' || valUpper === 'CARROCERIA' || valUpper === 'CARROCERÍA') continue;
+    datos.push(valor);
+  }
+  // eliminar duplicados y limpiar espacios
+  const uniq = Array.from(new Set(datos.map(s => s.trim()).filter(Boolean)));
+  return uniq;
+}
 
-        // Toggle sección de pruebas mecanizadas
-        function togglePruebasMecanizadas() {
-            const visita = document.querySelector('input[name="visita"]:checked').value;
-            const pruebasSection = document.getElementById('pruebas-section');
-            
-            if (visita === '2') {
-                pruebasSection.classList.remove('hidden');
-            } else {
-                pruebasSection.classList.add('hidden');
-                document.querySelectorAll('#pruebas-section input[type="checkbox"]').forEach(cb => {
-                    cb.checked = false;
-                });
-            }
-        }
+// Autocomplete genérico
+function setupAutocomplete(inputEl, sourceArray) {
+  inputEl.parentNode.classList.add('autocomplete');
+  inputEl.addEventListener('input', function() {
+    closeAllLists();
+    const val = this.value;
+    if (!val) return;
+    const list = document.createElement('div');
+    list.setAttribute('class', 'autocomplete-items');
+    this.parentNode.appendChild(list);
 
-        // Toggle certificado GNV
-        function toggleCertificadoGNV() {
-            const combustible = document.getElementById('tipo-combustible').value;
-            const gnvSection = document.getElementById('certificado-gnv-section');
-            const certInput = document.getElementById('cert-gnv');
-            const fechaInput = document.getElementById('fecha-vigencia-gnv');
-            
-            if (combustible === 'gas-gasolina') {
-                gnvSection.classList.remove('hidden');
-                certInput.required = true;
-                fechaInput.required = true;
-            } else {
-                gnvSection.classList.add('hidden');
-                certInput.required = false;
-                fechaInput.required = false;
-                certInput.value = '';
-                fechaInput.value = '';
-            }
-        }
+    const q = val.toUpperCase();
+    let matches = sourceArray.filter(s => s.toUpperCase().includes(q));
+    // priorizar que empiece por la cadena
+    matches.sort((a,b)=>{
+      const ai = a.toUpperCase().indexOf(q), bi = b.toUpperCase().indexOf(q);
+      return (ai === bi) ? a.localeCompare(b) : (ai - bi);
+    });
+    matches = matches.slice(0, 80); // límite
 
-        // Toggle presión de neumáticos
-        function togglePresion(posicion) {
-            const checkbox = document.getElementById(`na-${posicion}`);
-            const inputInicial = document.getElementById(`presion-${posicion}-inicial`);
-            const inputAjustada = document.getElementById(`presion-${posicion}-ajustada`);
-            
-            if (checkbox.checked) {
-                inputInicial.disabled = true;
-                inputAjustada.disabled = true;
-                inputInicial.value = '';
-                inputAjustada.value = '';
-                inputInicial.style.background = '#e9ecef';
-                inputAjustada.style.background = '#e9ecef';
-            } else {
-                inputInicial.disabled = false;
-                inputAjustada.disabled = false;
-                inputInicial.style.background = '';
-                inputAjustada.style.background = '';
-            }
-        }
+    if (!matches.length) {
+      const none = document.createElement('div');
+      none.textContent = 'Sin resultados';
+      list.appendChild(none);
+      return;
+    }
 
-        // Configurar Canvas para firma
-        function setupSignaturePad() {
-            const canvas = document.getElementById('signature-pad');
-            const ctx = canvas.getContext('2d');
-            
-            canvas.width = canvas.offsetWidth;
-            canvas.height = 200;
-            
-            let drawing = false;
-            let lastX = 0;
-            let lastY = 0;
+    matches.forEach(m=>{
+      const item = document.createElement('div');
+      const idx = m.toUpperCase().indexOf(q);
+      if (idx >= 0) {
+        item.innerHTML = m.substr(0,idx) + '<strong>' + m.substr(idx, q.length) + '</strong>' + m.substr(idx + q.length);
+      } else item.textContent = m;
+      const hidden = document.createElement('input');
+      hidden.type = 'hidden';
+      hidden.value = m;
+      item.appendChild(hidden);
+      item.addEventListener('click', function(){
+        inputEl.value = this.getElementsByTagName('input')[0].value;
+        closeAllLists();
+        inputEl.dispatchEvent(new Event('change'));
+      });
+      list.appendChild(item);
+    });
+  });
 
-            function startDrawing(e) {
-                drawing = true;
-                const rect = canvas.getBoundingClientRect();
-                lastX = (e.clientX || e.touches[0].clientX) - rect.left;
-                lastY = (e.clientY || e.touches[0].clientY) - rect.top;
-            }
+  inputEl.addEventListener('keydown', function(e){
+    const itemsContainer = this.parentNode.querySelector('.autocomplete-items');
+    if (!itemsContainer) return;
+    const items = itemsContainer.getElementsByTagName('div');
+    if (!items.length) return;
+    const active = itemsContainer.querySelector('.autocomplete-active');
+    let index = Array.prototype.indexOf.call(items, active);
+    if (e.key === 'ArrowDown') {
+      index = (index+1) % items.length;
+      if (active) active.classList.remove('autocomplete-active');
+      items[index].classList.add('autocomplete-active');
+      e.preventDefault();
+    } else if (e.key === 'ArrowUp') {
+      index = (index - 1 + items.length) % items.length;
+      if (active) active.classList.remove('autocomplete-active');
+      items[index].classList.add('autocomplete-active');
+      e.preventDefault();
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (index >= 0) items[index].click();
+    }
+  });
 
-            function draw(e) {
-                if (!drawing) return;
-                e.preventDefault();
-                
-                const rect = canvas.getBoundingClientRect();
-                const x = (e.clientX || e.touches[0].clientX) - rect.left;
-                const y = (e.clientY || e.touches[0].clientY) - rect.top;
+  function closeAllLists(el) {
+    const items = document.getElementsByClassName('autocomplete-items');
+    for (let i=0;i<items.length;i++) {
+      if (el !== items[i] && el !== inputEl) items[i].parentNode.removeChild(items[i]);
+    }
+  }
+  document.addEventListener('click', function(e){ closeAllLists(e.target); });
+}
 
-                ctx.beginPath();
-                ctx.moveTo(lastX, lastY);
-                ctx.lineTo(x, y);
-                ctx.strokeStyle = '#000';
-                ctx.lineWidth = 2;
-                ctx.lineCap = 'round';
-                ctx.stroke();
+// Construir tabla inspección según clase
+const vehItems = [
+  "Vehículo descargado (vacío)",
+  "Vehículo limpio",
+  "Vehículo sin tapas o copas",
+  "Alarma desactivada",
+  "Licencia de tránsito del vehículo",
+  "Certificado de gas natural vigente (vehículos convertidos)",
+  "Llanta de repuesto visible",
+  "Correcta presión de los neumáticos",
+  "Correcto funcionamiento de al menos una luz del vehículo",
+  "Vehículo sin candado o carpa suelta (Si Aplica)"
+];
 
-                lastX = x;
-                lastY = y;
-            }
+const motoItems = [
+  "Motocicleta limpia",
+  "Alarma desactivada",
+  "Licencia de tránsito del vehículo",
+  "Correcta presión de los neumáticos",
+  "Correcto funcionamiento de las luces",
+  "Indicador de nivel de líquido de frenos visible (Si Aplica)",
+  "Motocicleta con porta casco o maletero vacío (si aplica)"
+];
 
-            function stopDrawing() {
-                drawing = false;
-            }
+function updateDynamicFields() {
+  const clase = document.getElementById('clase-vehiculo').value;
+  const tabla = document.getElementById('tabla-inspeccion');
+  let items = vehItems;
+  if (clase === 'moto') items = motoItems;
+  // construir HTML
+  let html = '<thead><tr><th>Descripción</th><th style="width:80px">Sí</th><th style="width:80px">No</th></tr></thead><tbody>';
+  items.forEach((it,i)=>{
+    html += `<tr><td>${it}</td><td><input type="radio" name="insp-${i}" value="si"></td><td><input type="radio" name="insp-${i}" value="no"></td></tr>`;
+  });
+  html += '</tbody>';
+  tabla.innerHTML = html;
+}
 
-            canvas.addEventListener('mousedown', startDrawing);
-            canvas.addEventListener('mousemove', draw);
-            canvas.addEventListener('mouseup', stopDrawing);
-            canvas.addEventListener('mouseout', stopDrawing);
+// Toggle pruebas mecanizadas (ejemplo)
+function togglePruebasMecanizadas() {
+  // si necesitas esta lógica inclúyela
+}
 
-            canvas.addEventListener('touchstart', startDrawing);
-            canvas.addEventListener('touchmove', draw);
-            canvas.addEventListener('touchend', stopDrawing);
-        }
+// Inicialización
+document.addEventListener('DOMContentLoaded', async () => {
+  // fecha/hora por defecto
+  const now = new Date();
+  document.getElementById('fecha').valueAsDate = now;
+  document.getElementById('hora').value = now.toTimeString().slice(0,5);
 
-        function clearSignature() {
-            const canvas = document.getElementById('signature-pad');
-            const ctx = canvas.getContext('2d');
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-        }
+  await cargarDatosCSV();
 
-        function showAlert(message, type) {
-            const container = document.getElementById('alert-container');
-            const icon = type === 'success' ? '✅' : '❌';
-            container.innerHTML = `<div class="alert alert-${type} show">${icon} ${message}</div>`;
-            
-            setTimeout(() => {
-                container.innerHTML = '';
-            }, 5000);
-        }
+  // Configurar autocomplete (si arrays vacíos, pasar array de ejemplo)
+  setupAutocomplete(document.getElementById('marca'), marcasData.length?marcasData:['SIN DATOS']);
+  setupAutocomplete(document.getElementById('color'), coloresData.length?coloresData:['SIN DATOS']);
+  setupAutocomplete(document.getElementById('carroceria'), carroceriasData.length?carroceriasData:['SIN DATOS']);
 
-        function validateForm() {
-            const fecha = document.getElementById('fecha').value;
-            const hora = document.getElementById('hora').value;
-            const placa = document.getElementById('placa').value;
-            const marca = document.getElementById('marca').value;
-            const color = document.getElementById('color').value;
-            const claseVehiculo = document.getElementById('clase-vehiculo').value;
-            const tipoServicio = document.getElementById('tipo-servicio').value;
-            const tipoCombustible = document.getElementById('tipo-combustible').value;
+  // generar tabla inicial (usa la clase actual o 'auto' por defecto)
+  if (!document.getElementById('clase-vehiculo').value) document.getElementById('clase-vehiculo').value = 'auto';
+  updateDynamicFields();
 
-            if (!fecha || !hora || !placa || !marca || !color || !claseVehiculo || !tipoServicio || !tipoCombustible) {
-                showAlert('Por favor complete todos los campos obligatorios marcados con *', 'error');
-                return
+  // escuchar cambio de clase
+  document.getElementById('clase-vehiculo').addEventListener('change', updateDynamicFields);
+});
+
+// botón prueba guardar
+document.getElementById('btn-guardar').addEventListener('click', ()=>{
+  const debug = document.getElementById('debug');
+  const marca = document.getElementById('marca').value;
+  const color = document.getElementById('color').value;
+  const carro = document.getElementById('carroceria').value;
+  debug.textContent = `Guardar: Marca="${marca}" Color="${color}" Carrocería="${carro}"`;
+});
+</script>
+</body>
+</html>
