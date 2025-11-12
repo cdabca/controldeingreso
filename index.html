@@ -1,678 +1,633 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard CDA - Consulta y Facturación</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); padding: 20px; min-height: 100vh; }
-        .container { max-width: 1400px; margin: 0 auto; background: white; border-radius: 15px; box-shadow: 0 10px 50px rgba(0,0,0,0.3); overflow: hidden; }
-        .header { background: #2c3e50; color: white; padding: 25px; text-align: center; position: relative; }
-        .header h1 { font-size: 28px; margin-bottom: 8px; }
-        .header p { font-size: 14px; opacity: 0.9; }
-        .nav-links { position: absolute; top: 20px; right: 20px; }
-        .nav-links a { color: white; text-decoration: none; padding: 10px 20px; background: rgba(255,255,255,0.2); border-radius: 5px; font-weight: 600; transition: all 0.3s; }
-        .nav-links a:hover { background: rgba(255,255,255,0.3); }
-        .dashboard-content { padding: 30px; }
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 30px; }
-        .stat-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 25px; border-radius: 12px; box-shadow: 0 5px 20px rgba(0,0,0,0.2); text-align: center; }
-        .stat-card h3 { font-size: 16px; margin-bottom: 10px; opacity: 0.9; }
-        .stat-card .stat-number { font-size: 42px; font-weight: bold; margin: 10px 0; }
-        .filters-section { background: #f8f9fa; padding: 25px; border-radius: 12px; margin-bottom: 30px; border: 2px solid #e9ecef; }
-        .filters-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
-        .filter-group { display: flex; flex-direction: column; }
-        .filter-group label { font-weight: 600; margin-bottom: 8px; color: #2c3e50; font-size: 14px; }
-        .filter-group input, .filter-group select { padding: 10px; border: 2px solid #dfe6e9; border-radius: 8px; font-size: 14px; }
-        .filter-group input:focus, .filter-group select:focus { outline: none; border-color: #3498db; }
-        .filter-buttons { display: flex; gap: 10px; flex-wrap: wrap; }
-        .btn { padding: 12px 25px; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
-        .btn-search { background: #3498db; color: white; }
-        .btn-search:hover { background: #2980b9; transform: translateY(-2px); }
-        .btn-reset { background: #95a5a6; color: white; }
-        .btn-reset:hover { background: #7f8c8d; transform: translateY(-2px); }
-        .btn-export { background: #27ae60; color: white; }
-        .btn-export:hover { background: #229954; transform: translateY(-2px); }
-        .records-table-container { background: white; border-radius: 12px; overflow-x: auto; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        .records-table { width: 100%; border-collapse: collapse; min-width: 1000px; }
-        .records-table thead { background: #34495e; color: white; }
-        .records-table th { padding: 15px; text-align: left; font-weight: 600; font-size: 13px; position: sticky; top: 0; background: #34495e; z-index: 10; }
-        .records-table td { padding: 12px 15px; border-bottom: 1px solid #ecf0f1; font-size: 13px; }
-        .records-table tbody tr:hover { background: #f8f9fa; cursor: pointer; }
-        .badge { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; }
-        .badge-si { background: #d4edda; color: #155724; }
-        .badge-no { background: #f8d7da; color: #721c24; }
-        .badge-auto { background: #cce5ff; color: #004085; }
-        .badge-moto { background: #fff3cd; color: #856404; }
-        .no-records { text-align: center; padding: 50px; color: #7f8c8d; font-size: 18px; }
-        .alert { padding: 15px; border-radius: 8px; margin-bottom: 20px; font-weight: 600; }
-        .alert-info { background: #d1ecf1; color: #0c5460; border: 2px solid #bee5eb; }
-        .alert-success { background: #d4edda; color: #155724; border: 2px solid #c3e6cb; }
-        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); overflow-y: auto; }
-        .modal-content { background: white; margin: 50px auto; padding: 30px; border-radius: 12px; max-width: 900px; box-shadow: 0 10px 50px rgba(0,0,0,0.5); }
-        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 3px solid #3498db; }
-        .modal-header h2 { color: #2c3e50; }
-        .close-btn { font-size: 32px; font-weight: bold; color: #7f8c8d; cursor: pointer; transition: color 0.3s; }
-        .close-btn:hover { color: #2c3e50; }
-        .detail-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 25px; }
-        .detail-item { background: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 4px solid #3498db; }
-        .detail-item label { font-weight: 600; color: #7f8c8d; font-size: 12px; display: block; margin-bottom: 5px; }
-        .detail-item .value { color: #2c3e50; font-size: 16px; font-weight: 600; }
-        .signature-preview { text-align: center; margin-top: 25px; padding: 20px; background: #f8f9fa; border-radius: 8px; }
-        .signature-preview img { max-width: 400px; border: 2px solid #2c3e50; border-radius: 8px; padding: 10px; background: white; }
-        .inline-row { display:flex; gap:10px; align-items:center; }
-        @media (max-width: 768px) {
-            .stats-grid { grid-template-columns: 1fr; }
-            .filters-grid { grid-template-columns: 1fr; }
-            .filter-buttons { flex-direction: column; }
-            .btn { width: 100%; }
-            .modal-content { margin: 20px; padding: 20px; }
-            .nav-links { position: static; margin-top: 15px; }
-        }
-    </style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Recepción - Control de Ingreso (CDA)</title>
+  <style>
+    :root{--bg:#f4f7fb;--card:#fff;--accent:#11998e;--accent-2:#38ef7d;--muted:#7f8c8d}
+    *{box-sizing:border-box}
+    body{font-family:Segoe UI,Roboto,Arial,sans-serif;background:linear-gradient(135deg,var(--accent) 0%,var(--accent-2) 100%);margin:0;padding:24px;min-height:100vh}
+    .container{max-width:980px;margin:0 auto;background:var(--card);border-radius:12px;padding:20px;box-shadow:0 10px 40px rgba(0,0,0,.18)}
+    h1{font-size:20px;margin-bottom:6px}
+    p.lead{color:var(--muted);margin-bottom:16px}
+    .grid{display:grid;grid-template-columns:1fr 420px;gap:18px}
+    .card{background:var(--card);padding:14px;border-radius:10px;border:1px solid #eef2f5}
+    .field{margin-bottom:10px}
+    label{display:block;font-weight:600;margin-bottom:6px;color:#34495e;font-size:13px}
+    input[type="text"],input[type="date"],input[type="time"],select,input[type="number"]{width:100%;padding:10px;border:1px solid #d7e0e8;border-radius:8px;font-size:14px}
+    .row{display:flex;gap:8px}
+    .btn{display:inline-block;background:#3498db;color:#fff;padding:10px 14px;border-radius:8px;border:none;cursor:pointer;font-weight:700}
+    .btn.secondary{background:#95a5a6}
+    .btn.ghost{background:transparent;border:2px solid #3498db;color:#fff}
+    .small{font-size:13px;color:var(--muted)}
+    .signature-box{background:#fafafa;border:1px dashed #d6dfe8;border-radius:8px;padding:8px;text-align:center}
+    canvas{background:#fff;border-radius:6px;border:1px solid #dbe7f0}
+    .notice{padding:10px;border-radius:8px;background:#e9f7f1;color:#145a3d;margin-bottom:8px;font-weight:700}
+    .warning{background:#fff3cd;color:#855f00}
+    .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+    .link{color:#fff;text-decoration:none;padding:8px 12px;border-radius:8px;background:#2c3e50}
+    .visitas{display:flex;gap:8px;align-items:center}
+    .hidden{display:none}
+    @media (max-width:960px){.grid{grid-template-columns:1fr;}.container{padding:12px}}
+  </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>📊 Dashboard CDA - Consulta y Facturación</h1>
-            <p>Sistema de consulta de registros de recepción</p>
-            <div class="nav-links">
-                <a href="index.html">🔙 Volver a Recepción</a>
+  <div class="container">
+    <header style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <div>
+        <h1>Control de Ingreso — Recepción</h1>
+        <p class="lead">Registro y firma de entradas. Esta es la página principal (inicio).</p>
+      </div>
+      <nav style="display:flex;gap:8px;align-items:center">
+        <a class="link" id="open-dashboard" href="cda-dashboard.html">📊 Ir a Dashboard</a>
+      </nav>
+    </header>
+
+    <div class="grid">
+      <!-- Left: Form -->
+      <div class="card">
+        <div id="alerts"></div>
+
+        <form id="ingreso-form" onsubmit="event.preventDefault(); saveRecord();">
+          <div style="display:flex;gap:10px;margin-bottom:10px">
+            <div style="flex:1">
+              <label for="fecha">Fecha</label>
+              <input type="date" id="fecha" required />
             </div>
+            <div style="width:150px">
+              <label for="hora">Hora</label>
+              <input type="time" id="hora" required />
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="placa">Placa</label>
+            <input type="text" id="placa" placeholder="Ej: ABC123" autocomplete="off" required />
+            <div style="margin-top:6px;display:flex;gap:8px;align-items:center">
+              <button type="button" class="btn" onclick="buscarPlaca()">🔎 Buscar Placa</button>
+              <button type="button" class="btn secondary" onclick="autocompletarDesdeUltima()">🧩 Autorellenar</button>
+              <button type="button" class="btn secondary" onclick="clearForm()">✖ Limpiar</button>
+            </div>
+            <div id="placa-exists" class="small" style="margin-top:6px"></div>
+          </div>
+
+          <div class="row" style="margin-bottom:8px">
+            <div style="flex:1">
+              <label for="turno">Turno</label>
+              <input type="text" id="turno" placeholder="Ej: 18 18-1" />
+            </div>
+            <div style="width:140px">
+              <label for="clase">Clase</label>
+              <select id="clase">
+                <option value="">-- seleccionar --</option>
+                <option value="auto">Auto</option>
+                <option value="camioneta">Camioneta</option>
+                <option value="campero">Campero</option>
+                <option value="moto">Moto 4T</option>
+                <option value="otro">Otro</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="row" style="margin-bottom:8px">
+            <div style="flex:1">
+              <label for="marca">Marca</label>
+              <input type="text" id="marca" placeholder="Ej: Toyota" />
+            </div>
+            <div style="width:160px">
+              <label for="numSillas"># Sillas</label>
+              <input type="number" id="numSillas" min="1" />
+            </div>
+            <div style="width:140px">
+              <label for="preparado">Preparado</label>
+              <select id="preparado">
+                <option value="">-- --</option>
+                <option value="si">Sí</option>
+                <option value="no">No</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="row" style="margin-bottom:8px">
+            <div style="flex:1">
+              <label for="color">Color</label>
+              <input type="text" id="color" placeholder="Ej: Blanco" />
+            </div>
+            <div style="width:180px">
+              <label for="servicio">Tipo de servicio</label>
+              <input type="text" id="servicio" placeholder="Público / Particular" />
+            </div>
+            <div style="width:160px">
+              <label for="combustible">Combustible</label>
+              <input type="text" id="combustible" placeholder="Ej: Gasolina" />
+            </div>
+          </div>
+
+          <div style="margin-top:10px;margin-bottom:8px">
+            <label>Visita</label>
+            <div class="visitas">
+              <label><input type="radio" name="visita" value="1" checked /> Primera</label>
+              <label><input type="radio" name="visita" value="2" /> Segunda</label>
+            </div>
+          </div>
+
+          <div id="pruebas-section" class="hidden" style="margin-top:8px;margin-bottom:8px">
+            <label>Pruebas mecánicas (segunda visita)</label>
+            <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px">
+              <label><input type="checkbox" id="p_alineacion" /> Alineación</label>
+              <label><input type="checkbox" id="p_frenos" /> Frenos</label>
+              <label><input type="checkbox" id="p_gases" /> Gases</label>
+              <label><input type="checkbox" id="p_suspension" /> Suspensión</label>
+              <label><input type="checkbox" id="p_luces" /> Luces</label>
+              <label><input type="checkbox" id="p_opacidad" /> Opacidad</label>
+            </div>
+            <div style="margin-top:8px">
+              <label>Vehículo público cumple</label>
+              <select id="cumple">
+                <option value="">-- --</option>
+                <option value="si">Sí</option>
+                <option value="no">No</option>
+              </select>
+            </div>
+          </div>
+
+          <div style="margin-top:12px">
+            <label>Firma del cliente</label>
+            <div class="signature-box">
+              <canvas id="sig-canvas" width="360" height="140"></canvas>
+              <div class="actions" style="justify-content:center">
+                <button type="button" class="btn" onclick="clearSignature()">Borrar Firma</button>
+                <button type="button" class="btn secondary" onclick="downloadSignature()">Descargar</button>
+              </div>
+              <div class="small" style="margin-top:6px">Firma con mouse o touch. Requerida para guardar.</div>
+            </div>
+          </div>
+
+          <div style="margin-top:14px;display:flex;gap:8px;align-items:center">
+            <button type="submit" class="btn">💾 Guardar Registro</button>
+            <button type="button" class="btn secondary" onclick="saveAndGoToDashboard()">Guardar y Ver Dashboard</button>
+            <div style="margin-left:auto" class="small">Registros se guardan en storage/localStorage</div>
+          </div>
+        </form>
+      </div>
+
+      <!-- Right: Preview / Últimas entradas -->
+      <aside>
+        <div class="card">
+          <div id="last-record" class="notice hidden"></div>
+
+          <h3 style="margin-top:0">Últimas entradas</h3>
+          <div id="recent-list" class="small"></div>
+          <hr style="margin:12px 0" />
+          <div>
+            <button class="btn" onclick="populateFromLatest()">Autorellenar desde última entrada</button>
+            <button class="btn secondary" onclick="openDashboardWithCurrent()">Ir al Dashboard con filtros</button>
+          </div>
         </div>
 
-        <div class="dashboard-content">
-            <div id="alert-container"></div>
+        <div style="height:12px"></div>
 
-            <!-- Estadísticas -->
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <h3>📝 Total de Registros</h3>
-                    <div class="stat-number" id="stat-total">0</div>
-                </div>
-                <div class="stat-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
-                    <h3>📅 Registros Hoy</h3>
-                    <div class="stat-number" id="stat-today">0</div>
-                </div>
-                <div class="stat-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
-                    <h3>🚗 Vehículos Únicos</h3>
-                    <div class="stat-number" id="stat-unique">0</div>
-                </div>
-                <div class="stat-card" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
-                    <h3>✅ Vehículos Preparados</h3>
-                    <div class="stat-number" id="stat-prepared">0</div>
-                </div>
+        <div class="card">
+          <h4 style="margin:0 0 8px 0">Importar / Exportar</h4>
+          <div style="display:flex;gap:8px;flex-direction:column">
+            <input type="file" id="csv-file" accept=".csv,.xlsx,.xls" />
+            <div style="display:flex;gap:8px;margin-top:8px">
+              <button class="btn" onclick="importCSV()">Importar CSV/XLSX</button>
+              <button class="btn secondary" onclick="exportAll()">Exportar Todo (XLSX)</button>
             </div>
-
-            <!-- Filtros -->
-            <div class="filters-section">
-                <h3 style="margin-bottom: 20px; color: #2c3e50;">🔍 Filtros de Búsqueda</h3>
-                <div class="filters-grid">
-                    <div class="filter-group">
-                        <label>Placa</label>
-                        <!-- Add datalist for autocomplete suggestions -->
-                        <div class="inline-row">
-                            <input type="text" id="filter-placa" list="plates-datalist" placeholder="Ej: ABC123" oninput="onPlateInput()">
-                            <datalist id="plates-datalist"></datalist>
-                            <button class="btn btn-search" style="padding: 8px 12px; font-size:13px;" onclick="autofillFromPlate()">🔎 Buscar y Autorellenar</button>
-                        </div>
-                    </div>
-                    <div class="filter-group">
-                        <label>Fecha Desde</label>
-                        <input type="date" id="filter-fecha-desde">
-                    </div>
-                    <div class="filter-group">
-                        <label>Fecha Hasta</label>
-                        <input type="date" id="filter-fecha-hasta">
-                    </div>
-                    <div class="filter-group">
-                        <label>Turno</label>
-                        <input type="text" id="filter-turno" placeholder="Ej: 18 18-1">
-                    </div>
-                    <div class="filter-group">
-                        <label>Marca</label>
-                        <input type="text" id="filter-marca" placeholder="Ej: Toyota">
-                    </div>
-                    <div class="filter-group">
-                        <label>Color</label>
-                        <input type="text" id="filter-color" placeholder="Ej: Blanco">
-                    </div>
-                    <div class="filter-group">
-                        <label>Número de Sillas</label>
-                        <input type="text" id="filter-numsillas" placeholder="Ej: 5">
-                    </div>
-                    <div class="filter-group">
-                        <label>Clase de Vehículo</label>
-                        <select id="filter-clase">
-                            <option value="">Todos</option>
-                            <option value="auto">Auto</option>
-                            <option value="camioneta">Camioneta</option>
-                            <option value="campero">Campero</option>
-                            <option value="moto">Moto 4T</option>
-                            <option value="otro">Otro</option>
-                        </select>
-                    </div>
-                    <div class="filter-group">
-                        <label>Vehículo Preparado</label>
-                        <select id="filter-preparado">
-                            <option value="">Todos</option>
-                            <option value="si">Sí</option>
-                            <option value="no">No</option>
-                        </select>
-                    </div>
-                    <div class="filter-group">
-                        <label>Tipo de Servicio</label>
-                        <input type="text" id="filter-servicio" placeholder="Ej: Público/Particular">
-                    </div>
-                    <div class="filter-group">
-                        <label>Combustible</label>
-                        <input type="text" id="filter-combustible" placeholder="Ej: Gasolina">
-                    </div>
-                </div>
-                <div class="filter-buttons">
-                    <button class="btn btn-search" onclick="applyFilters()">🔍 Buscar</button>
-                    <button class="btn btn-reset" onclick="resetFilters()">🔄 Limpiar Filtros</button>
-                    <button class="btn btn-export" onclick="exportToExcel()">📊 Exportar a Excel</button>
-                </div>
-
-                <!-- CSV import UI -->
-                <div style="margin-top:18px; display:flex; gap:10px; align-items:center;">
-                    <input type="file" id="csv-file" accept=".csv,.xlsx,.xls" />
-                    <button class="btn" style="background:#6c5ce7;color:white;" onclick="importCSV()">⬆️ Importar CSV/XLSX</button>
-                    <small style="color:#7f8c8d;">(Si la plataforma sube el CSV pero no guarda en storage, usa esta importación para probar)</small>
-                </div>
-
-                <!-- Small preview area to show the autofill result -->
-                <div id="autorellenado-preview" style="margin-top:12px; color:#2c3e50; font-weight:600;"></div>
-            </div>
-
-            <!-- Tabla de Registros -->
-            <div class="records-table-container">
-                <table class="records-table">
-                    <thead>
-                        <tr>
-                            <th>Fecha</th>
-                            <th>Hora</th>
-                            <th>Placa</th>
-                            <th>Turno</th>
-                            <th>Marca</th>
-                            <th>Color</th>
-                            <th>Clase</th>
-                            <th>Preparado</th>
-                            <th>Visita</th>
-                            <th>Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody id="records-tbody">
-                        <tr>
-                            <td colspan="10" class="no-records">⏳ Cargando registros...</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
+            <div class="small" style="margin-top:8px">Si la carga desde la plataforma no persiste, usa importación para poblar storage y probar Dashboard.</div>
+          </div>
         </div>
+      </aside>
     </div>
+  </div>
 
-    <!-- Modal de Detalle -->
-    <div id="detail-modal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>📋 Detalle del Registro</h2>
-                <span class="close-btn" onclick="closeModal()">&times;</span>
-            </div>
-            <div id="detail-content"></div>
-        </div>
-    </div>
+  <script>
+    // --- Utilities and storage helpers
+    function showAlert(msg, type = 'info') {
+      const a = document.createElement('div');
+      a.className = type === 'info' ? 'notice' : 'notice warning';
+      a.textContent = msg;
+      const container = document.getElementById('alerts');
+      container.appendChild(a);
+      setTimeout(()=>a.remove(), 5000);
+    }
 
-    <script>
-        let allRecords = [];
-        let filteredRecords = [];
-
-        window.addEventListener('load', () => { loadRecords(); });
-
-        // -- Utilities
-        function safeBoolean(value) {
-            if (value === undefined || value === null) return false;
-            if (typeof value === 'boolean') return value;
-            const s = String(value).toLowerCase().trim();
-            return s === 'si' || s === 'sí' || s === 'yes' || s === 'true' || s === '1';
+    async function storageSet(key, value) {
+      // try platform window.storage.set(key, value) or window.storage.set({key,value}) then localStorage
+      try {
+        if (window.storage && typeof window.storage.set === 'function') {
+          try { await window.storage.set(key, value); return; } catch(e){ }
+          try { await window.storage.set({ key, value }); return; } catch(e){ }
         }
+      } catch(e){}
+      try { localStorage.setItem(key, value); } catch(e) { console.error('No storage available', e); }
+    }
 
-        function normalizeRecord(raw) {
-            const normalized = {};
-            if (!raw || typeof raw !== 'object') return normalized;
-            const map = {};
-            Object.keys(raw).forEach(k => {
-                const key = k.toLowerCase().replace(/\s+/g, '').replace(/[^a-z0-9]/g,'');
-                map[key] = raw[k];
-            });
-            normalized.fecha = map['fecha'] || map['date'] || map['fecharegistro'] || '';
-            normalized.hora = map['hora'] || map['time'] || '';
-            normalized.placa = (map['placa'] || map['plate'] || map['placanum'] || '').toString().toUpperCase();
-            normalized.turno = map['turno'] || map['shift'] || '';
-            normalized.marca = map['marca'] || map['brand'] || '';
-            normalized.color = map['color'] || map['col'] || '';
-            normalized.numSillas = map['numsillas'] || map['numdeasientos'] || map['asientos'] || '';
-            normalized.clase = (map['clase'] || map['clasevehiculo'] || map['class'] || '').toLowerCase();
-            normalized.servicio = map['servicio'] || map['service'] || '';
-            normalized.combustible = map['combustible'] || map['fuel'] || '';
-            normalized.preparado = (map['preparado'] || map['prepared'] || '').toString().toLowerCase() || 'no';
-            normalized.visita = map['visita'] || map['visit'] || '1';
-            const pruebas = {};
-            ['alineacion','frenos','gases','suspension','luces','opacidad'].forEach(p => {
-                pruebas[p] = safeBoolean(map[p]) || false;
-            });
-            if (map['pruebas']) {
-                try {
-                    const parsed = typeof map['pruebas'] === 'string' ? JSON.parse(map['pruebas']) : map['pruebas'];
-                    Object.assign(pruebas, parsed);
-                } catch(e) {}
+    async function storageGet(key) {
+      try {
+        if (window.storage && typeof window.storage.get === 'function') {
+          try {
+            const res = await window.storage.get(key);
+            if (res && res.value !== undefined) return res.value;
+            return res;
+          } catch(e){}
+        }
+      } catch(e){}
+      try { return localStorage.getItem(key); } catch(e) {}
+      return null;
+    }
+
+    async function storageList(prefix = 'record_') {
+      // Try window.storage.list or fall back to localStorage scan
+      try {
+        if (window.storage && typeof window.storage.list === 'function') {
+          try {
+            const r = await window.storage.list(prefix);
+            // r.keys or array
+            if (Array.isArray(r)) return r;
+            if (r && Array.isArray(r.keys)) return r.keys;
+          } catch(e){}
+        }
+      } catch(e){}
+      // fallback localStorage
+      const keys = [];
+      try {
+        for (let i=0;i<localStorage.length;i++){
+          const k = localStorage.key(i);
+          if (!k) continue;
+          if (k.startsWith(prefix) || k.toLowerCase().includes('record') || k.toLowerCase().includes('cda')) keys.push(k);
+        }
+      } catch(e){}
+      return keys;
+    }
+
+    // --- Signature pad simple
+    const canvas = document.getElementById('sig-canvas');
+    const ctx = canvas.getContext('2d');
+    let drawing = false;
+    let last = {x:0,y:0};
+    function resizeCanvas(){ /* keep fixed size - no-op for now */ }
+    function getPos(e){
+      const rect = canvas.getBoundingClientRect();
+      if (e.touches) e = e.touches[0];
+      return { x: (e.clientX - rect.left), y: (e.clientY - rect.top) };
+    }
+    function startDraw(e){ drawing=true; last = getPos(e); e.preventDefault(); }
+    function moveDraw(e){ if(!drawing) return; const p = getPos(e); ctx.strokeStyle='#000'; ctx.lineWidth=2; ctx.lineJoin='round'; ctx.lineCap='round'; ctx.beginPath(); ctx.moveTo(last.x,last.y); ctx.lineTo(p.x,p.y); ctx.stroke(); last = p; e.preventDefault(); }
+    function endDraw(e){ drawing=false; e.preventDefault(); }
+    canvas.addEventListener('mousedown', startDraw); canvas.addEventListener('touchstart', startDraw);
+    canvas.addEventListener('mousemove', moveDraw); canvas.addEventListener('touchmove', moveDraw);
+    canvas.addEventListener('mouseup', endDraw); canvas.addEventListener('mouseout', endDraw); canvas.addEventListener('touchend', endDraw);
+
+    function clearSignature(){ ctx.clearRect(0,0,canvas.width,canvas.height); }
+    function downloadSignature(){ const data = canvas.toDataURL('image/png'); const a = document.createElement('a'); a.href = data; a.download = 'firma.png'; document.body.appendChild(a); a.click(); a.remove(); }
+
+    // --- Form logic
+    document.addEventListener('DOMContentLoaded', () => {
+      // defaults fecha/hora
+      const d = new Date();
+      document.getElementById('fecha').value = d.toISOString().split('T')[0];
+      document.getElementById('hora').value = d.toTimeString().slice(0,5);
+
+      // show/hide pruebas based on visita
+      document.querySelectorAll('input[name="visita"]').forEach(r => r.addEventListener('change', e => {
+        const sec = document.getElementById('pruebas-section');
+        if (document.querySelector('input[name="visita"]:checked').value === '2') sec.classList.remove('hidden');
+        else sec.classList.add('hidden');
+      }));
+
+      // handle incoming query params to prefill (from dashboard)
+      const params = new URLSearchParams(window.location.search);
+      if (params.has('_from_dashboard') || Array.from(params.keys()).length>0) {
+        // fill known fields
+        const map = {
+          'placa':'placa','turno':'turno','marca':'marca','color':'color','numsillas':'numSillas',
+          'clase':'clase','preparado':'preparado','fechaDesde':'fecha','fechaHasta':'fecha',
+          'servicio':'servicio','combustible':'combustible'
+        };
+        for (const [k,v] of params.entries()){
+          if (k === '_from_dashboard') continue;
+          const field = map[k] || k;
+          const el = document.getElementById(field);
+          if (el) {
+            // if fechaDesde/fechaHasta both present, prefer fechaDesde to fill date
+            if ((k==='fechaDesde' || k==='fechaHasta') && !document.getElementById('fecha').value) {
+              el.value = v;
+            } else if (!(k==='fechaDesde' || k==='fechaHasta')) {
+              el.value = v;
             }
-            normalized.pruebas = pruebas;
-            const condiciones = {};
-            condiciones.ingreso = safeBoolean(map['condicionesingreso'] || map['ingreso'] || map['condicioningreso']);
-            condiciones.salida = safeBoolean(map['condicionessalida'] || map['salida']);
-            condiciones.comercial = safeBoolean(map['comercial'] || map['contactocomercial']);
-            condiciones.datos = safeBoolean(map['datos'] || map['tratamientodedatos']);
-            normalized.condiciones = condiciones;
-            normalized.cumple = (map['cumple'] || map['vehiculopublicocumple'] || '').toString().toLowerCase();
-            normalized.firma = map['firma'] || map['signature'] || '';
-            if (map['timestamp']) normalized.timestamp = Number(map['timestamp']) || Date.now();
-            else if (normalized.fecha || normalized.hora) {
-                const t = new Date((normalized.fecha || '') + ' ' + (normalized.hora || ''));
-                normalized.timestamp = isNaN(t.getTime()) ? Date.now() : t.getTime();
-            } else normalized.timestamp = Date.now();
-            return normalized;
+          }
         }
+        // if placa provided, mark existence preview and optionally autofill
+        if (params.get('placa')) {
+          document.getElementById('placa').value = params.get('placa').toUpperCase();
+          setTimeout(()=>buscarPlaca(), 200);
+        }
+      }
 
-        // -- Load records with fallback and then populate plates datalist
-        async function loadRecords() {
-            allRecords = [];
-            try {
-                if (window.storage && typeof window.storage.list === 'function') {
-                    try {
-                        const result = await window.storage.list('record_');
-                        let keys = [];
-                        if (Array.isArray(result)) keys = result;
-                        else if (Array.isArray(result.keys)) keys = result.keys;
-                        else if (result && typeof result === 'object' && result.keys) keys = result.keys;
-                        keys = keys.map(k => typeof k === 'string' ? k : (k.name || k.key || '')).filter(Boolean);
-                        for (const key of keys) {
-                            try {
-                                const recordResult = await window.storage.get(key);
-                                let val = recordResult && (recordResult.value !== undefined ? recordResult.value : recordResult);
-                                if (typeof val === 'string') {
-                                    try { val = JSON.parse(val); } catch (e) {}
-                                }
-                                const rec = normalizeRecord(val);
-                                rec.id = key;
-                                allRecords.push(rec);
-                            } catch (err) { console.warn('Error reading key from window.storage:', key, err); }
-                        }
-                    } catch (err) { console.warn('Error using window.storage.list/get:', err); }
-                }
+      refreshRecentList();
+    });
 
-                if (allRecords.length === 0 && typeof localStorage !== 'undefined') {
-                    const fallbackKeys = [];
-                    for (let i = 0; i < localStorage.length; i++) {
-                        const k = localStorage.key(i);
-                        if (!k) continue;
-                        if (k.startsWith('record_') || k.toLowerCase().includes('record') || k.toLowerCase().includes('cda')) fallbackKeys.push(k);
-                    }
-                    for (const k of fallbackKeys) {
-                        try {
-                            let raw = localStorage.getItem(k);
-                            try { raw = JSON.parse(raw); } catch(e) {}
-                            const rec = normalizeRecord(raw);
-                            rec.id = k;
-                            allRecords.push(rec);
-                        } catch (e) { console.warn('Error parsing localStorage record', k, e); }
-                    }
-                }
+    // Normalize keys like earlier normalizeRecord (small variant)
+    function normalizeRecordForSave(raw) {
+      const rec = {};
+      rec.fecha = raw.fecha || '';
+      rec.hora = raw.hora || '';
+      rec.placa = (raw.placa || '').toString().toUpperCase();
+      rec.turno = raw.turno || '';
+      rec.marca = raw.marca || '';
+      rec.color = raw.color || '';
+      rec.numSillas = raw.numSillas || raw.numsillas || '';
+      rec.clase = (raw.clase || '').toLowerCase();
+      rec.servicio = raw.servicio || '';
+      rec.combustible = raw.combustible || '';
+      rec.preparado = (raw.preparado || '').toString().toLowerCase();
+      rec.visita = raw.visita || '1';
+      rec.pruebas = raw.pruebas || {};
+      rec.condiciones = raw.condiciones || {};
+      rec.cumple = raw.cumple || '';
+      rec.timestamp = raw.timestamp || Date.now();
+      rec.firma = raw.firma || '';
+      return rec;
+    }
 
-                if (allRecords.length === 0) {
-                    document.getElementById('records-tbody').innerHTML = `
-                        <tr><td colspan="10" class="no-records">📭 No hay registros disponibles</td></tr>
-                    `;
-                    filteredRecords = [];
-                    updateStats();
-                    showAlert('ℹ️ No se encontraron registros en storage/localStorage. Intenta usar "Importar CSV" para cargar datos.', 'info');
-                    populatePlatesDatalist();
-                    return;
-                }
+    async function saveRecord() {
+      // ensure signature exists
+      const sigData = canvas.toDataURL();
+      // check if blank: compare to blank canvas
+      const blank = document.createElement('canvas'); blank.width = canvas.width; blank.height = canvas.height;
+      const isBlank = sigData === blank.toDataURL();
+      if (isBlank) { showAlert('Firma requerida para guardar', 'warning'); return; }
 
-                allRecords.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-                filteredRecords = [...allRecords];
-                renderTable();
-                updateStats();
-                populatePlatesDatalist();
-                showAlert(`✅ ${allRecords.length} registros cargados exitosamente`, 'success');
-            } catch (error) {
-                console.error('Error loading records:', error);
-                showAlert('❌ Error al cargar los registros (ver consola)', 'error');
+      const recRaw = {
+        fecha: document.getElementById('fecha').value,
+        hora: document.getElementById('hora').value,
+        placa: document.getElementById('placa').value.trim().toUpperCase(),
+        turno: document.getElementById('turno').value.trim(),
+        marca: document.getElementById('marca').value.trim(),
+        color: document.getElementById('color').value.trim(),
+        numSillas: document.getElementById('numSillas').value,
+        clase: document.getElementById('clase').value,
+        servicio: document.getElementById('servicio').value.trim(),
+        combustible: document.getElementById('combustible').value.trim(),
+        preparado: document.getElementById('preparado').value,
+        visita: document.querySelector('input[name="visita"]:checked').value,
+        pruebas: {
+          alineacion: document.getElementById('p_alineacion').checked,
+          frenos: document.getElementById('p_frenos').checked,
+          gases: document.getElementById('p_gases').checked,
+          suspension: document.getElementById('p_suspension').checked,
+          luces: document.getElementById('p_luces').checked,
+          opacidad: document.getElementById('p_opacidad').checked
+        },
+        condiciones: {}, // extend as needed
+        cumple: document.getElementById('cumple').value,
+        timestamp: Date.now(),
+        firma: sigData
+      };
+
+      const rec = normalizeRecordForSave(recRaw);
+      const id = `record_${rec.timestamp}_${rec.placa || 'x'}`;
+      try {
+        await storageSet(id, JSON.stringify(rec));
+        showAlert(`Registro guardado: ${rec.placa || '(sin placa)'} ✅`);
+        // update recent list
+        refreshRecentList();
+        // clear form for next entry (but keep date/time default maybe)
+        clearForm(true);
+      } catch (e) {
+        console.error(e);
+        showAlert('Error al guardar registro (revisar consola)', 'warning');
+      }
+    }
+
+    async function saveAndGoToDashboard(){
+      await saveRecord();
+      // redirect to dashboard and request prefill for placa
+      const placa = document.getElementById('placa').value.trim().toUpperCase();
+      const qs = placa ? `?placa=${encodeURIComponent(placa)}&_from_reception=1` : '';
+      window.location.href = 'cda-dashboard.html' + qs;
+    }
+
+    function clearForm(keepDate=false) {
+      if (!keepDate) {
+        document.getElementById('fecha').value = new Date().toISOString().split('T')[0];
+        document.getElementById('hora').value = new Date().toTimeString().slice(0,5);
+      }
+      ['placa','turno','marca','color','numSillas','servicio','combustible'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+      document.getElementById('clase').value='';
+      document.getElementById('preparado').value='';
+      document.querySelectorAll('input[name="visita"]').forEach(r=>{ if(r.value==='1') r.checked=true; });
+      document.getElementById('pruebas-section').classList.add('hidden');
+      ['p_alineacion','p_frenos','p_gases','p_suspension','p_luces','p_opacidad'].forEach(id=>document.getElementById(id).checked=false);
+      document.getElementById('cumple').value='';
+      clearSignature();
+      document.getElementById('placa-exists').textContent='';
+    }
+
+    async function refreshRecentList() {
+      const keys = await storageList();
+      const recent = [];
+      for (const k of keys.slice(-50).reverse()) {
+        try {
+          const v = await storageGet(k);
+          let parsed = v;
+          if (typeof v === 'string') {
+            try { parsed = JSON.parse(v); } catch(e){}
+          }
+          if (parsed && parsed.placa) recent.push(parsed);
+        } catch(e){}
+      }
+      const el = document.getElementById('recent-list');
+      if (recent.length === 0) { el.innerHTML = '<div class="small">No hay registros guardados.</div>'; return; }
+      el.innerHTML = recent.slice(0,8).map(r => {
+        return `<div style="margin-bottom:8px">
+          <strong>${r.placa}</strong> — ${r.marca || ''} ${r.color || ''} <span class="small" style="color:#666">(${new Date(r.timestamp||0).toLocaleString()})</span>
+        </div>`;
+      }).join('');
+      // also put last record notice
+      const last = recent[0];
+      if (last) {
+        const lastEl = document.getElementById('last-record');
+        lastEl.classList.remove('hidden');
+        lastEl.textContent = `Últ.: ${last.placa} — ${last.marca || ''} ${last.color || ''} (${last.visita || '1'}ª)`;
+      }
+    }
+
+    // --- Search plate existence and provide preview
+    async function buscarPlaca() {
+      const p = document.getElementById('placa').value.trim().toUpperCase();
+      if (!p) { showAlert('Ingrese una placa para buscar', 'info'); return; }
+      const keys = await storageList();
+      let found = null;
+      for (const k of keys.reverse()) {
+        try {
+          const v = await storageGet(k);
+          let parsed = v;
+          if (typeof v === 'string') {
+            try { parsed = JSON.parse(v); } catch(e){}
+          }
+          if (parsed && parsed.placa && parsed.placa.toUpperCase() === p) { found = parsed; break; }
+        } catch(e){}
+      }
+      const msg = document.getElementById('placa-exists');
+      if (found) {
+        msg.textContent = `❗ Placa encontrada: última visita ${found.visita || '1'} — ${found.marca || ''} ${found.color || ''} (${new Date(found.timestamp||0).toLocaleString()})`;
+        msg.style.color = '#145a3d';
+      } else {
+        msg.textContent = 'Placa no encontrada en la base cargada';
+        msg.style.color = '#b22222';
+      }
+    }
+
+    async function autocompletarDesdeUltima() {
+      const p = document.getElementById('placa').value.trim().toUpperCase();
+      if (!p) { showAlert('Ingrese placa para autocompletar', 'info'); return; }
+      const keys = await storageList();
+      let found = null;
+      for (const k of keys.reverse()) {
+        try {
+          const v = await storageGet(k);
+          let parsed = v;
+          if (typeof v === 'string') {
+            try { parsed = JSON.parse(v); } catch(e){}
+          }
+          if (parsed && parsed.placa && parsed.placa.toUpperCase() === p) { found = parsed; break; }
+        } catch(e){}
+      }
+      if (!found) { showAlert('No se encontró registro para esa placa', 'info'); return; }
+      // fill fields
+      document.getElementById('turno').value = found.turno || '';
+      document.getElementById('marca').value = found.marca || '';
+      document.getElementById('color').value = found.color || '';
+      document.getElementById('numSillas').value = found.numSillas || '';
+      document.getElementById('clase').value = found.clase || '';
+      document.getElementById('preparado').value = found.preparado || '';
+      document.querySelectorAll('input[name="visita"]').forEach(r => r.checked = r.value === (found.visita || '1'));
+      if ((found.visita || '1') === '2') document.getElementById('pruebas-section').classList.remove('hidden'); else document.getElementById('pruebas-section').classList.add('hidden');
+      const pruebas = found.pruebas || {};
+      ['alineacion','frenos','gases','suspension','luces','opacidad'].forEach(pName=>{
+        const el = document.getElementById('p_'+pName);
+        if (el) el.checked = Boolean(pruebas[pName]);
+      });
+      document.getElementById('cumple').value = found.cumple || '';
+      showAlert('Autorrellenado desde última entrada ✅', 'info');
+    }
+
+    async function populateFromLatest() {
+      // fill form with absolute latest record if exists
+      const keys = await storageList();
+      for (let i = keys.length-1; i>=0; i--) {
+        try {
+          const v = await storageGet(keys[i]);
+          let parsed = v;
+          if (typeof v === 'string') {
+            try { parsed = JSON.parse(v); } catch(e){}
+          }
+          if (parsed && parsed.placa) {
+            document.getElementById('placa').value = parsed.placa || '';
+            autocompletarDesdeUltima();
+            break;
+          }
+        } catch(e){}
+      }
+    }
+
+    // --- Import / Export (uses xlsx if available)
+    async function importCSV() {
+      const input = document.getElementById('csv-file');
+      if (!input.files || !input.files[0]) { showAlert('Seleccione un archivo', 'info'); return; }
+      const file = input.files[0];
+      if (typeof XLSX === 'undefined') {
+        showAlert('Falta la librería XLSX para importar (añada <script src=\"https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js\"></script>)', 'warning');
+        return;
+      }
+      try {
+        const data = await file.arrayBuffer();
+        const workbook = XLSX.read(data, { type: 'array' });
+        const sheet = workbook.SheetNames[0];
+        const rows = XLSX.utils.sheet_to_json(workbook.Sheets[sheet], { defval: '' });
+        let count = 0;
+        for (let i=0;i<rows.length;i++) {
+          const raw = rows[i];
+          const normalized = {
+            fecha: raw.Fecha || raw.fecha || raw.Date || '',
+            hora: raw.Hora || raw.hora || raw.Time || '',
+            placa: (raw.Placa || raw.placa || raw.Plate || '').toString().toUpperCase(),
+            turno: raw.Turno || raw.turno || '',
+            marca: raw.Marca || raw.marca || '',
+            color: raw.Color || raw.color || '',
+            numSillas: raw['Num Sillas'] || raw.numSillas || '',
+            clase: (raw.Clase || raw.clase || '').toLowerCase(),
+            servicio: raw.Servicio || raw.servicio || '',
+            combustible: raw.Combustible || raw.combustible || '',
+            preparado: (raw.Preparado || raw.preparado || '').toString().toLowerCase(),
+            visita: raw.Visita || raw.visita || '1',
+            pruebas: {},
+            condiciones: {},
+            cumple: raw.Cumple || raw.cumple || '',
+            timestamp: Date.now()
+          };
+          const id = `record_${normalized.timestamp}_${i}`;
+          await storageSet(id, JSON.stringify(normalized));
+          count++;
+        }
+        showAlert(`Importadas ${count} filas correctamente`, 'info');
+        refreshRecentList();
+      } catch(e){ console.error(e); showAlert('Error importando archivo (ver consola)', 'warning'); }
+    }
+
+    function exportAll() {
+      if (typeof XLSX === 'undefined') {
+        showAlert('Falta la librería XLSX para exportar (añada <script src=\"https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js\"></script>)', 'warning');
+        return;
+      }
+      storageList().then(async keys=>{
+        const rows = [];
+        for (const k of keys) {
+          try {
+            const v = await storageGet(k);
+            let parsed = v;
+            if (typeof v === 'string') {
+              try { parsed = JSON.parse(v); } catch(e){}
             }
+            if (parsed) rows.push(parsed);
+          } catch(e){}
         }
+        if (rows.length === 0) { showAlert('No hay registros para exportar', 'info'); return; }
+        const ws = XLSX.utils.json_to_sheet(rows);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Registros');
+        XLSX.writeFile(wb, `CDA_Registros_${new Date().toISOString().split('T')[0]}.xlsx`);
+      });
+    }
 
-        // -- Populate datalist with unique plates
-        function populatePlatesDatalist() {
-            const datalist = document.getElementById('plates-datalist');
-            if (!datalist) return;
-            // unique plates sorted
-            const plates = Array.from(new Set(allRecords.map(r => (r.placa || '').toString().toUpperCase()).filter(Boolean))).sort();
-            datalist.innerHTML = plates.map(p => `<option value="${p}">`).join('');
-        }
+    // --- Open dashboard passing current filters (used by right-side button)
+    function openDashboardWithCurrent() {
+      const params = {};
+      const p = document.getElementById('placa').value.trim();
+      if (p) params.placa = p.toUpperCase();
+      const turno = document.getElementById('turno').value.trim();
+      if (turno) params.turno = turno;
+      const fecha = document.getElementById('fecha').value;
+      if (fecha) params.fechaDesde = fecha;
+      // add more as needed
+      params._from_reception = '1';
+      const qs = Object.keys(params).map(k=>`${encodeURIComponent(k)}=${encodeURIComponent(params[k])}`).join('&');
+      window.location.href = 'cda-dashboard.html' + (qs ? ('?'+qs) : '');
+    }
 
-        function onPlateInput() {
-            // Optionally, we can implement live suggestions or auto-preview as user types
-            const placa = document.getElementById('filter-placa').value.trim().toUpperCase();
-            if (!placa) {
-                document.getElementById('autorellenado-preview').textContent = '';
-                return;
-            }
-            // show a preview of existence but don't autofill until user clicks button
-            const rec = findLatestRecordByPlate(placa);
-            if (rec) {
-                document.getElementById('autorellenado-preview').textContent = `🟢 Placa encontrada: última visita ${rec.visita || '1'} - ${rec.marca || ''} ${rec.color || ''} (${rec.fecha || ''} ${rec.hora || ''})`;
-            } else {
-                document.getElementById('autorellenado-preview').textContent = `🔴 Placa no encontrada en la base cargada`;
-            }
-        }
+    // --- Helper to open dashboard prefilled if clicking header link with fields
+    document.getElementById('open-dashboard').addEventListener('click', function(e){
+      // keep default behaviour (go to dashboard), but we want to pass current placa if present
+      e.preventDefault();
+      openDashboardWithCurrent();
+    });
+  </script>
 
-        // find most recent record by plate
-        function findLatestRecordByPlate(placa) {
-            if (!placa) return null;
-            const up = placa.toString().toUpperCase();
-            const matches = allRecords.filter(r => (r.placa || '').toString().toUpperCase() === up);
-            if (matches.length === 0) return null;
-            matches.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-            return matches[0];
-        }
-
-        // Autofill fields from found plate (button)
-        function autofillFromPlate() {
-            const placa = document.getElementById('filter-placa').value.trim().toUpperCase();
-            if (!placa) { showAlert('Ingrese una placa para buscar', 'info'); return; }
-            const rec = findLatestRecordByPlate(placa);
-            if (!rec) {
-                showAlert(`🔍 No se encontró la placa ${placa} en la base cargada`, 'info');
-                document.getElementById('autorellenado-preview').textContent = `🔴 Placa ${placa} no encontrada`;
-                return;
-            }
-
-            // Fill visible filter inputs with data from record (so user can adjust and then press Buscar)
-            document.getElementById('filter-turno').value = rec.turno || '';
-            document.getElementById('filter-marca').value = rec.marca || '';
-            document.getElementById('filter-color').value = rec.color || '';
-            document.getElementById('filter-numsillas').value = rec.numSillas || '';
-            // set clase select to one of the known values if possible
-            const claseVal = rec.clase || '';
-            const claseSelect = document.getElementById('filter-clase');
-            if (claseSelect) {
-                const option = Array.from(claseSelect.options).find(o => o.value === claseVal);
-                claseSelect.value = option ? claseVal : '';
-            }
-            // preparado (si/no) select
-            const prepVal = (String(rec.preparado || '').toLowerCase() === 'si') ? 'si' : ((String(rec.preparado || '').toLowerCase() === 'no') ? 'no' : '');
-            const prepSelect = document.getElementById('filter-preparado');
-            if (prepSelect) prepSelect.value = prepVal;
-
-            document.getElementById('filter-servicio').value = rec.servicio || '';
-            document.getElementById('filter-combustible').value = rec.combustible || '';
-            // Optionally set fecha/hora to record's date to easily find it
-            if (rec.fecha) document.getElementById('filter-fecha-desde').value = rec.fecha;
-            if (rec.fecha) document.getElementById('filter-fecha-hasta').value = rec.fecha;
-
-            document.getElementById('autorellenado-preview').textContent = `✅ Autorrelleno aplicado desde la última fila encontrada (${rec.fecha || ''} ${rec.hora || ''})`;
-            showAlert(`✅ Autorrellado con datos de la placa ${placa}`, 'success');
-            // Optionally run the filters automatically
-            // applyFilters();
-        }
-
-        // -- Render table
-        function renderTable() {
-            const tbody = document.getElementById('records-tbody');
-            if (!filteredRecords || filteredRecords.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="10" class="no-records">🔍 No se encontraron registros con los filtros aplicados</td></tr>`;
-                return;
-            }
-            tbody.innerHTML = filteredRecords.map(record => {
-                const claseBadge = record.clase === 'moto' ? 'moto' : 'auto';
-                const preparado = (String(record.preparado || '').toLowerCase() === 'si' || record.preparado === true) ? 'si' : 'no';
-                return `
-                <tr onclick="showDetail('${record.id}')">
-                    <td>${record.fecha || ''}</td>
-                    <td>${record.hora || ''}</td>
-                    <td><strong>${record.placa || ''}</strong></td>
-                    <td>${record.turno || ''}</td>
-                    <td>${record.marca || ''}</td>
-                    <td>${record.color || ''}</td>
-                    <td><span class="badge badge-${claseBadge}">${record.clase || ''}</span></td>
-                    <td><span class="badge ${preparado === 'si' ? 'badge-si' : 'badge-no'}">${preparado === 'si' ? 'Sí' : 'No'}</span></td>
-                    <td>${record.visita || '1'}ª</td>
-                    <td><button class="btn btn-search" style="padding: 6px 15px; font-size: 12px;" onclick="event.stopPropagation(); showDetail('${record.id}')">Ver</button></td>
-                </tr>
-                `;
-            }).join('');
-        }
-
-        // -- Update statistics
-        function updateStats() {
-            document.getElementById('stat-total').textContent = allRecords.length || 0;
-            const today = new Date().toISOString().split('T')[0];
-            const todayRecords = allRecords.filter(r => (r.fecha || '').split('T')[0] === today || new Date(r.timestamp || 0).toISOString().split('T')[0] === today);
-            document.getElementById('stat-today').textContent = todayRecords.length || 0;
-            const uniquePlates = new Set(allRecords.map(r => (r.placa || '').toUpperCase()).filter(Boolean));
-            document.getElementById('stat-unique').textContent = uniquePlates.size || 0;
-            const prepared = allRecords.filter(r => String(r.preparado || '').toLowerCase() === 'si' || r.preparado === true);
-            document.getElementById('stat-prepared').textContent = prepared.length || 0;
-        }
-
-        // -- Apply / reset filters
-        function applyFilters() {
-            const placa = document.getElementById('filter-placa').value.toUpperCase().trim();
-            const fechaDesde = document.getElementById('filter-fecha-desde').value;
-            const fechaHasta = document.getElementById('filter-fecha-hasta').value;
-            const turno = document.getElementById('filter-turno').value.trim();
-            const clase = document.getElementById('filter-clase').value;
-            const preparado = document.getElementById('filter-preparado').value;
-            const marca = document.getElementById('filter-marca').value.trim();
-            const color = document.getElementById('filter-color').value.trim();
-            const numsillas = document.getElementById('filter-numsillas').value.trim();
-            const servicio = document.getElementById('filter-servicio').value.trim();
-            const combustible = document.getElementById('filter-combustible').value.trim();
-
-            filteredRecords = allRecords.filter(record => {
-                if (placa && !String(record.placa || '').toUpperCase().includes(placa)) return false;
-                if (fechaDesde && (record.fecha || '') < fechaDesde) return false;
-                if (fechaHasta && (record.fecha || '') > fechaHasta) return false;
-                if (turno && !(String(record.turno || '').includes(turno))) return false;
-                if (clase && record.clase !== clase) return false;
-                if (preparado && String(record.preparado || '').toLowerCase() !== preparado) return false;
-                if (marca && !(String(record.marca || '').toLowerCase().includes(marca.toLowerCase()))) return false;
-                if (color && !(String(record.color || '').toLowerCase().includes(color.toLowerCase()))) return false;
-                if (numsillas && String(record.numSillas || '') !== numsillas) return false;
-                if (servicio && !(String(record.servicio || '').toLowerCase().includes(servicio.toLowerCase()))) return false;
-                if (combustible && !(String(record.combustible || '').toLowerCase().includes(combustible.toLowerCase()))) return false;
-                return true;
-            });
-
-            renderTable();
-            showAlert(`🔍 ${filteredRecords.length} registros encontrados`, 'info');
-        }
-
-        function resetFilters() {
-            document.getElementById('filter-placa').value = '';
-            document.getElementById('filter-fecha-desde').value = '';
-            document.getElementById('filter-fecha-hasta').value = '';
-            document.getElementById('filter-turno').value = '';
-            document.getElementById('filter-clase').value = '';
-            document.getElementById('filter-preparado').value = '';
-            document.getElementById('filter-marca').value = '';
-            document.getElementById('filter-color').value = '';
-            document.getElementById('filter-numsillas').value = '';
-            document.getElementById('filter-servicio').value = '';
-            document.getElementById('filter-combustible').value = '';
-            filteredRecords = [...allRecords];
-            renderTable();
-            showAlert('🔄 Filtros limpiados', 'info');
-            document.getElementById('autorellenado-preview').textContent = '';
-        }
-
-        // -- Detail modal
-        function showDetail(recordId) {
-            const record = allRecords.find(r => r.id === recordId) || filteredRecords.find(r => r.id === recordId);
-            if (!record) return;
-            const safe = (v, fallback='') => (v === undefined || v === null) ? fallback : v;
-            const pruebas = record.pruebas || {};
-            const condiciones = record.condiciones || {};
-            const detailContent = document.getElementById('detail-content');
-            detailContent.innerHTML = `
-                <div class="detail-grid">
-                    <div class="detail-item"><label>Fecha</label><div class="value">${safe(record.fecha)}</div></div>
-                    <div class="detail-item"><label>Hora</label><div class="value">${safe(record.hora)}</div></div>
-                    <div class="detail-item"><label>Placa</label><div class="value">${safe(record.placa)}</div></div>
-                    <div class="detail-item"><label>Turno</label><div class="value">${safe(record.turno)}</div></div>
-                    <div class="detail-item"><label>Marca</label><div class="value">${safe(record.marca)}</div></div>
-                    <div class="detail-item"><label>Color</label><div class="value">${safe(record.color)}</div></div>
-                    <div class="detail-item"><label>Número de Sillas</label><div class="value">${safe(record.numSillas,'N/A')}</div></div>
-                    <div class="detail-item"><label>Clase</label><div class="value">${safe(record.clase)}</div></div>
-                    <div class="detail-item"><label>Tipo de Servicio</label><div class="value">${safe(record.servicio)}</div></div>
-                    <div class="detail-item"><label>Combustible</label><div class="value">${safe(record.combustible)}</div></div>
-                    <div class="detail-item"><label>Vehículo Preparado</label><div class="value">${(String(record.preparado || '').toLowerCase() === 'si') ? 'Sí' : 'No'}</div></div>
-                    <div class="detail-item"><label>Visita</label><div class="value">${safe(record.visita,'1')}ª</div></div>
-                </div>
-
-                <div style="margin-top: 25px;">
-                    <h3 style="color: #2c3e50; margin-bottom: 15px;">🔧 Pruebas Mecánicas</h3>
-                    ${String(record.visita) === '2' && Object.keys(pruebas).length ? `
-                        <div class="detail-grid">
-                            ${Object.entries(pruebas).map(([key, value]) => `
-                                <div class="detail-item">
-                                    <label>${key.charAt(0).toUpperCase() + key.slice(1)}</label>
-                                    <div class="value">${safeBoolean(value) ? '✅ Sí' : '❌ No'}</div>
-                                </div>
-                            `).join('')}
-                            <div class="detail-item"><label>Vehículo Público Cumple</label><div class="value">${record.cumple === 'si' ? '✅ Sí' : record.cumple === 'no' ? '❌ No' : 'N/A'}</div></div>
-                        </div>
-                    ` : `
-                        <div class="detail-item"><label>Primera visita</label><div class="value">No aplican pruebas mecánicas</div></div>
-                    `}
-                </div>
-
-                <div style="margin-top: 25px;">
-                    <h3 style="color: #2c3e50; margin-bottom: 15px;">📋 Condiciones Aceptadas</h3>
-                    <div class="detail-grid">
-                        <div class="detail-item"><label>Condiciones de Ingreso</label><div class="value">${safeBoolean(condiciones.ingreso) ? '✅ Aceptadas' : '❌ No aceptadas'}</div></div>
-                        <div class="detail-item"><label>Condiciones de Salida</label><div class="value">${safeBoolean(condiciones.salida) ? '✅ Aceptadas' : '❌ No aceptadas'}</div></div>
-                        <div class="detail-item"><label>Contacto Comercial</label><div class="value">${safeBoolean(condiciones.comercial) ? '✅ Autorizado' : '❌ No autorizado'}</div></div>
-                        <div class="detail-item"><label>Tratamiento de Datos</label><div class="value">${safeBoolean(condiciones.datos) ? '✅ Autorizado' : '❌ No autorizado'}</div></div>
-                    </div>
-                </div>
-
-                <div class="signature-preview">
-                    <h3 style="color: #2c3e50; margin-bottom: 15px;">✍️ Firma del Cliente</h3>
-                    ${record.firma ? `<img src="${record.firma}" alt="Firma">` : `<div style="color:#7f8c8d;">Sin firma disponible</div>`}
-                    <p style="margin-top: 10px; color: #7f8c8d; font-size: 13px;">
-                        Firmado el ${new Date(record.timestamp || Date.now()).toLocaleString('es-CO')}
-                    </p>
-                </div>
-            `;
-            document.getElementById('detail-modal').style.display = 'block';
-        }
-
-        function closeModal() { document.getElementById('detail-modal').style.display = 'none'; }
-        window.onclick = function(event) { const modal = document.getElementById('detail-modal'); if (event.target === modal) modal.style.display = 'none'; }
-
-        // -- Export to Excel
-        function exportToExcel() {
-            if (!filteredRecords || filteredRecords.length === 0) { showAlert('⚠️ No hay registros para exportar', 'info'); return; }
-            const exportData = filteredRecords.map(record => {
-                const pruebas = record.pruebas || {};
-                return {
-                    'Fecha': record.fecha || '',
-                    'Hora': record.hora || '',
-                    'Placa': record.placa || '',
-                    'Turno': record.turno || '',
-                    'Marca': record.marca || '',
-                    'Color': record.color || '',
-                    'Num Sillas': record.numSillas || '',
-                    'Clase': record.clase || '',
-                    'Servicio': record.servicio || '',
-                    'Combustible': record.combustible || '',
-                    'Preparado': record.preparado || '',
-                    'Visita': (record.visita || '') + 'ª',
-                    'Alineación': safeBoolean(pruebas.alineacion) ? 'Sí' : 'No',
-                    'Frenos': safeBoolean(pruebas.frenos) ? 'Sí' : 'No',
-                    'Gases': safeBoolean(pruebas.gases) ? 'Sí' : 'No',
-                    'Suspensión': safeBoolean(pruebas.suspension) ? 'Sí' : 'No',
-                    'Luces': safeBoolean(pruebas.luces) ? 'Sí' : 'No',
-                    'Opacidad': safeBoolean(pruebas.opacidad) ? 'Sí' : 'No',
-                    'Fecha Registro': new Date(record.timestamp || Date.now()).toLocaleString('es-CO')
-                };
-            });
-            const ws = XLSX.utils.json_to_sheet(exportData);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, 'Registros CDA');
-            const fileName = `CDA_Registros_${new Date().toISOString().split('T')[0]}.xlsx`;
-            XLSX.writeFile(wb, fileName);
-            showAlert(`✅ Archivo Excel exportado: ${fileName}`, 'success');
-        }
-
-        // -- CSV/XLSX import
-        async function importCSV() {
-            const input = document.getElementById('csv-file');
-            if (!input.files || input.files.length === 0) { showAlert('Seleccione un archivo CSV/XLSX para importar', 'info'); return; }
-            const file = input.files[0];
-            try {
-                const data = await file.arrayBuffer();
-                const workbook = XLSX.read(data, { type: 'array' });
-                const firstSheet = workbook.SheetNames[0];
-                const json = XLSX.utils.sheet_to_json(workbook.Sheets[firstSheet], { defval: '' });
-                if (!Array.isArray(json) || json.length === 0) { showAlert('El archivo no contiene filas', 'info'); return; }
-
-                let count = 0;
-                for (let i = 0; i < json.length; i++) {
-                    const raw = json[i];
-                    const rec = normalizeRecord(raw);
-                    const id = `record_${Date.now()}_${i}`;
-                    rec.id = id;
-                    try {
-                        if (window.storage && typeof window.storage.set === 'function') {
-                            try {
-                                await window.storage.set(id, JSON.stringify(rec));
-                            } catch (e) {
-                                try { await window.storage.set({ key: id, value: JSON.stringify(rec) }); } catch (err) { console.warn('window.storage.set alternative failed', err); }
-                            }
-                        } else if (typeof localStorage !== 'undefined') {
-                            localStorage.setItem(id, JSON.stringify(rec));
-                        }
-                        allRecords.push(rec);
-                        count++;
-                    } catch (err) { console.error('Error saving imported record', err); }
-                }
-
-                filteredRecords = [...allRecords];
-                allRecords.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-                renderTable();
-                updateStats();
-                populatePlatesDatalist();
-                showAlert(`✅ ${count} filas importadas correctamente`, 'success');
-            } catch (err) {
-                console.error('Error importing file:', err);
-                showAlert('❌ Error al importar el archivo (ver consola)', 'error');
-            }
-        }
-
-        // -- Alerts
-        function showAlert(message, type) {
-            const container = document.getElementById('alert-container');
-            const alert = document.createElement('div');
-            alert.className = `alert alert-${type === 'error' ? 'info' : (type || 'info')}`;
-            alert.textContent = message;
-            container.appendChild(alert);
-            setTimeout(() => { alert.remove(); }, 6000);
-        }
-    </script>
+  <!-- Optional: XLSX lib for import/export. Add only if needed in your deployment -->
+  <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script> -->
 </body>
 </html>
