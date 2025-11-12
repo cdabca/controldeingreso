@@ -1,28 +1,632 @@
-// Export to Excel
-        function exportToExcel() {
-            if (filteredRecords.length === 0) {
-                showAlert('⚠️ No hay registros para exportar', 'info');
-                return;
-            }
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Recepción - Control de Ingreso (CDA)</title>
+  <style>
+    :root{--bg:#f4f7fb;--card:#fff;--accent:#11998e;--accent-2:#38ef7d;--muted:#7f8c8d}
+    *{box-sizing:border-box}
+    body{font-family:Segoe UI,Roboto,Arial,sans-serif;background:linear-gradient(135deg,var(--accent) 0%,var(--accent-2) 100%);margin:0;padding:24px;min-height:100vh}
+    .container{max-width:980px;margin:0 auto;background:var(--card);border-radius:12px;padding:20px;box-shadow:0 10px 40px rgba(0,0,0,.18)}
+    h1{font-size:20px;margin-bottom:6px}
+    p.lead{color:var(--muted);margin-bottom:16px}
+    .grid{display:grid;grid-template-columns:1fr 420px;gap:18px}
+    .card{background:var(--card);padding:14px;border-radius:10px;border:1px solid #eef2f5}
+    .field{margin-bottom:10px}
+    label{display:block;font-weight:600;margin-bottom:6px;color:#34495e;font-size:13px}
+    input[type="text"],input[type="date"],input[type="time"],select,input[type="number"]{width:100%;padding:10px;border:1px solid #d7e0e8;border-radius:8px;font-size:14px}
+    .row{display:flex;gap:8px}
+    .btn{display:inline-block;background:#3498db;color:#fff;padding:10px 14px;border-radius:8px;border:none;cursor:pointer;font-weight:700}
+    .btn.secondary{background:#95a5a6}
+    .btn.ghost{background:transparent;border:2px solid #3498db;color:#fff}
+    .small{font-size:13px;color:var(--muted)}
+    .signature-box{background:#fafafa;border:1px dashed #d6dfe8;border-radius:8px;padding:8px;text-align:center}
+    canvas{background:#fff;border-radius:6px;border:1px solid #dbe7f0}
+    .notice{padding:10px;border-radius:8px;background:#e9f7f1;color:#145a3d;margin-bottom:8px;font-weight:700}
+    .warning{background:#fff3cd;color:#855f00}
+    .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+    .link{color:#fff;text-decoration:none;padding:8px 12px;border-radius:8px;background:#2c3e50}
+    .visitas{display:flex;gap:8px;align-items:center}
+    .hidden{display:none}
+    @media (max-width:960px){.grid{grid-template-columns:1fr;}.container{padding:12px}}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <div>
+        <h1>Control de Ingreso — Recepción</h1>
+        <p class="lead">Registro y firma de entradas. Esta es la página principal (inicio).</p>
+      </div>
+      <nav style="display:flex;gap:8px;align-items:center">
+        <a class="link" id="open-dashboard" href="cda-dashboard.html">📊 Ir a Dashboard</a>
+      </nav>
+    </header>
 
-            const exportData = filteredRecords.map(record => ({
-                'Fecha': record.fecha || '',
-                'Hora': record.hora || '',
-                'Placa': record.placa || '',
-                'Turno': record.turno || '',
-                'Marca': record.marca || '',
-                'Color': record.color || '',
-                'Num Sillas': record.numSillas || 'N/A',
-                'Clase': record.clase || '',
-                'Servicio': record.servicio || '',
-                'Combustible': record.combustible || '',
-                'Preparado': record.preparado || '',
-                'Visita': (record.visita || '1') + 'ª',
-                'Alineación': record.pruebas?.alineacion ? 'Sí' : 'No',
-                'Frenos': record.pruebas?.frenos ? 'Sí' : 'No',
-                'Gases': record.pruebas?.gases ? 'Sí' : 'No',
-                'Suspensión': record.pruebas?.suspension ? 'Sí' : 'No',
-                'Luces': record.pruebas?.luces ? 'Sí' : 'No',
-                'Opacidad': record.pruebas?.opacidad ? 'Sí' : 'No',
-                'Fecha Registro': record.timestamp ? new Date(record.timestamp).toLocaleString('es-CO') : ''
-            }));
+    <div class="grid">
+      <!-- Left: Form -->
+      <div class="card">
+        <div id="alerts"></div>
+
+        <form id="ingreso-form" onsubmit="event.preventDefault(); saveRecord();">
+          <div style="display:flex;gap:10px;margin-bottom:10px">
+            <div style="flex:1">
+              <label for="fecha">Fecha</label>
+              <input type="date" id="fecha" required />
+            </div>
+            <div style="width:150px">
+              <label for="hora">Hora</label>
+              <input type="time" id="hora" required />
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="placa">Placa</label>
+            <input type="text" id="placa" placeholder="Ej: ABC123" autocomplete="off" required />
+            <div style="margin-top:6px;display:flex;gap:8px;align-items:center">
+              <button type="button" class="btn" onclick="buscarPlaca()">🔎 Buscar Placa</button>
+              <button type="button" class="btn secondary" onclick="autocompletarDesdeUltima()">🧩 Autorellenar</button>
+              <button type="button" class="btn secondary" onclick="clearForm()">✖ Limpiar</button>
+            </div>
+            <div id="placa-exists" class="small" style="margin-top:6px"></div>
+          </div>
+
+          <div class="row" style="margin-bottom:8px">
+            <div style="flex:1">
+              <label for="turno">Turno</label>
+              <input type="text" id="turno" placeholder="Ej: 18 18-1" />
+            </div>
+            <div style="width:140px">
+              <label for="clase">Clase</label>
+              <select id="clase">
+                <option value="">-- seleccionar --</option>
+                <option value="auto">Auto</option>
+                <option value="camioneta">Camioneta</option>
+                <option value="campero">Campero</option>
+                <option value="moto">Moto 4T</option>
+                <option value="otro">Otro</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="row" style="margin-bottom:8px">
+            <div style="flex:1">
+              <label for="marca">Marca</label>
+              <input type="text" id="marca" placeholder="Ej: Toyota" />
+            </div>
+            <div style="width:160px">
+              <label for="numSillas"># Sillas</label>
+              <input type="number" id="numSillas" min="1" />
+            </div>
+            <div style="width:140px">
+              <label for="preparado">Preparado</label>
+              <select id="preparado">
+                <option value="">-- --</option>
+                <option value="si">Sí</option>
+                <option value="no">No</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="row" style="margin-bottom:8px">
+            <div style="flex:1">
+              <label for="color">Color</label>
+              <input type="text" id="color" placeholder="Ej: Blanco" />
+            </div>
+            <div style="width:180px">
+              <label for="servicio">Tipo de servicio</label>
+              <input type="text" id="servicio" placeholder="Público / Particular" />
+            </div>
+            <div style="width:160px">
+              <label for="combustible">Combustible</label>
+              <input type="text" id="combustible" placeholder="Ej: Gasolina" />
+            </div>
+          </div>
+
+          <div style="margin-top:10px;margin-bottom:8px">
+            <label>Visita</label>
+            <div class="visitas">
+              <label><input type="radio" name="visita" value="1" checked /> Primera</label>
+              <label><input type="radio" name="visita" value="2" /> Segunda</label>
+            </div>
+          </div>
+
+          <div id="pruebas-section" class="hidden" style="margin-top:8px;margin-bottom:8px">
+            <label>Pruebas mecánicas (segunda visita)</label>
+            <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px">
+              <label><input type="checkbox" id="p_alineacion" /> Alineación</label>
+              <label><input type="checkbox" id="p_frenos" /> Frenos</label>
+              <label><input type="checkbox" id="p_gases" /> Gases</label>
+              <label><input type="checkbox" id="p_suspension" /> Suspensión</label>
+              <label><input type="checkbox" id="p_luces" /> Luces</label>
+              <label><input type="checkbox" id="p_opacidad" /> Opacidad</label>
+            </div>
+            <div style="margin-top:8px">
+              <label>Vehículo público cumple</label>
+              <select id="cumple">
+                <option value="">-- --</option>
+                <option value="si">Sí</option>
+                <option value="no">No</option>
+              </select>
+            </div>
+          </div>
+
+          <div style="margin-top:12px">
+            <label>Firma del cliente</label>
+            <div class="signature-box">
+              <canvas id="sig-canvas" width="360" height="140"></canvas>
+              <div class="actions" style="justify-content:center">
+                <button type="button" class="btn" onclick="clearSignature()">Borrar Firma</button>
+                <button type="button" class="btn secondary" onclick="downloadSignature()">Descargar</button>
+              </div>
+              <div class="small" style="margin-top:6px">Firma con mouse o touch. Requerida para guardar.</div>
+            </div>
+          </div>
+
+          <div style="margin-top:14px;display:flex;gap:8px;align-items:center">
+            <button type="submit" class="btn">💾 Guardar Registro</button>
+            <button type="button" class="btn secondary" onclick="saveAndGoToDashboard()">Guardar y Ver Dashboard</button>
+            <div style="margin-left:auto" class="small">Registros se guardan en storage/localStorage</div>
+          </div>
+        </form>
+      </div>
+
+      <!-- Right: Preview / Últimas entradas -->
+      <aside>
+        <div class="card">
+          <div id="last-record" class="notice hidden"></div>
+
+          <h3 style="margin-top:0">Últimas entradas</h3>
+          <div id="recent-list" class="small"></div>
+          <hr style="margin:12px 0" />
+          <div>
+            <button class="btn" onclick="populateFromLatest()">Autorellenar desde última entrada</button>
+            <button class="btn secondary" onclick="openDashboardWithCurrent()">Ir al Dashboard con filtros</button>
+          </div>
+        </div>
+
+        <div style="height:12px"></div>
+
+        <div class="card">
+          <h4 style="margin:0 0 8px 0">Importar / Exportar</h4>
+          <div style="display:flex;gap:8px;flex-direction:column">
+            <input type="file" id="csv-file" accept=".csv,.xlsx,.xls" />
+            <div style="display:flex;gap:8px;margin-top:8px">
+              <button class="btn" onclick="importCSV()">Importar CSV/XLSX</button>
+              <button class="btn secondary" onclick="exportAll()">Exportar Todo (XLSX)</button>
+            </div>
+            <div class="small" style="margin-top:8px">Si la carga desde la plataforma no persiste, usa importación para poblar storage y probar Dashboard.</div>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <script>
+    // --- Utilities and storage helpers
+    function showAlert(msg, type = 'info') {
+      const a = document.createElement('div');
+      a.className = type === 'info' ? 'notice' : 'notice warning';
+      a.textContent = msg;
+      const container = document.getElementById('alerts');
+      container.appendChild(a);
+      setTimeout(()=>a.remove(), 5000);
+    }
+
+    async function storageSet(key, value) {
+      try {
+        if (window.storage && typeof window.storage.set === 'function') {
+          try { await window.storage.set(key, value); return; } catch(e){ }
+          try { await window.storage.set({ key, value }); return; } catch(e){ }
+        }
+      } catch(e){}
+      try { localStorage.setItem(key, value); } catch(e) { console.error('No storage available', e); }
+    }
+
+    async function storageGet(key) {
+      try {
+        if (window.storage && typeof window.storage.get === 'function') {
+          try {
+            const res = await window.storage.get(key);
+            if (res && res.value !== undefined) return res.value;
+            return res;
+          } catch(e){}
+        }
+      } catch(e){}
+      try { return localStorage.getItem(key); } catch(e) {}
+      return null;
+    }
+
+    async function storageList(prefix = 'record_') {
+      try {
+        if (window.storage && typeof window.storage.list === 'function') {
+          try {
+            const r = await window.storage.list(prefix);
+            if (Array.isArray(r)) return r;
+            if (r && Array.isArray(r.keys)) return r.keys;
+          } catch(e){}
+        }
+      } catch(e){}
+      const keys = [];
+      try {
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i);
+          if (!k) continue;
+          if (k.startsWith(prefix) || k.toLowerCase().includes('record') || k.toLowerCase().includes('cda')) keys.push(k);
+        }
+      } catch(e){}
+      return keys;
+    }
+
+    // --- Signature pad simple
+    const canvas = document.getElementById('sig-canvas');
+    const ctx = canvas.getContext('2d');
+    let drawing = false;
+    let last = {x:0,y:0};
+    function getPos(e){
+      const rect = canvas.getBoundingClientRect();
+      if (e.touches) e = e.touches[0];
+      return { x: (e.clientX - rect.left), y: (e.clientY - rect.top) };
+    }
+    function startDraw(e){ drawing=true; last = getPos(e); e.preventDefault(); }
+    function moveDraw(e){ if(!drawing) return; const p = getPos(e); ctx.strokeStyle='#000'; ctx.lineWidth=2; ctx.lineJoin='round'; ctx.lineCap='round'; ctx.beginPath(); ctx.moveTo(last.x,last.y); ctx.lineTo(p.x,p.y); ctx.stroke(); last = p; e.preventDefault(); }
+    function endDraw(e){ drawing=false; e.preventDefault(); }
+    canvas.addEventListener('mousedown', startDraw); canvas.addEventListener('touchstart', startDraw);
+    canvas.addEventListener('mousemove', moveDraw); canvas.addEventListener('touchmove', moveDraw);
+    canvas.addEventListener('mouseup', endDraw); canvas.addEventListener('mouseout', endDraw); canvas.addEventListener('touchend', endDraw);
+
+    function clearSignature(){ ctx.clearRect(0,0,canvas.width,canvas.height); }
+    function downloadSignature(){ const data = canvas.toDataURL('image/png'); const a = document.createElement('a'); a.href = data; a.download = 'firma.png'; document.body.appendChild(a); a.click(); a.remove(); }
+
+    // --- Helpers
+    function normalizeRecordForSave(raw) {
+      const rec = {};
+      rec.fecha = raw.fecha || '';
+      rec.hora = raw.hora || '';
+      rec.placa = (raw.placa || '').toString().toUpperCase();
+      rec.turno = raw.turno || '';
+      rec.marca = raw.marca || '';
+      rec.color = raw.color || '';
+      rec.numSillas = raw.numSillas || raw.numsillas || '';
+      rec.clase = (raw.clase || '').toLowerCase();
+      rec.servicio = raw.servicio || '';
+      rec.combustible = raw.combustible || '';
+      rec.preparado = (raw.preparado || '').toString().toLowerCase();
+      rec.visita = raw.visita || '1';
+      rec.pruebas = raw.pruebas || {};
+      rec.condiciones = raw.condiciones || {};
+      rec.cumple = raw.cumple || '';
+      rec.timestamp = raw.timestamp || Date.now();
+      rec.firma = raw.firma || '';
+      return rec;
+    }
+
+    // --- New: set current date/time when platform opens or returns to focus
+    // If fields are empty, fill with current date/time. If fields already have values (e.g. coming from dashboard prefill),
+    // do not override them.
+    function setCurrentDateTime({ force = false } = {}) {
+      const now = new Date();
+      const dateStr = now.toISOString().split('T')[0];
+      const timeStr = now.toTimeString().slice(0,5);
+      const fechaEl = document.getElementById('fecha');
+      const horaEl = document.getElementById('hora');
+      if (!fechaEl || !horaEl) return;
+      if (force || !fechaEl.value) fechaEl.value = dateStr;
+      if (force || !horaEl.value) horaEl.value = timeStr;
+    }
+
+    // --- Form logic / main flow
+    document.addEventListener('DOMContentLoaded', () => {
+      // Fill date/time immediately when page loads (unless query params supplied a value)
+      setCurrentDateTime();
+
+      // show/hide pruebas based on visita
+      document.querySelectorAll('input[name="visita"]').forEach(r => r.addEventListener('change', e => {
+        const sec = document.getElementById('pruebas-section');
+        if (document.querySelector('input[name="visita"]:checked').value === '2') sec.classList.remove('hidden');
+        else sec.classList.add('hidden');
+      }));
+
+      // handle incoming query params to prefill (from dashboard)
+      const params = new URLSearchParams(window.location.search);
+      if (params.has('_from_dashboard') || params.has('_from_reception') || Array.from(params.keys()).length > 0) {
+        // fill known fields (do not override fecha/hora if already set by setCurrentDateTime unless user passed explicit date)
+        const map = {
+          'placa':'placa','turno':'turno','marca':'marca','color':'color','numsillas':'numSillas',
+          'clase':'clase','preparado':'preparado','fechaDesde':'fecha','fechaHasta':'fecha',
+          'servicio':'servicio','combustible':'combustible'
+        };
+        for (const [k,v] of params.entries()){
+          if (k === '_from_dashboard' || k === '_from_reception') continue;
+          const field = map[k] || k;
+          const el = document.getElementById(field);
+          if (el) {
+            // set only if param present (overrides default date/time if user explicitly passed fecha)
+            el.value = v;
+          }
+        }
+        // if placa provided, mark existence preview and optionally autofill
+        if (params.get('placa')) {
+          document.getElementById('placa').value = params.get('placa').toUpperCase();
+          setTimeout(()=>buscarPlaca(), 200);
+        }
+      }
+
+      // Refresh recent list
+      refreshRecentList();
+
+      // When the page gains focus (user switches back to tab/app), update the date/time if fields are empty
+      window.addEventListener('focus', () => setCurrentDateTime({ force: false }));
+      // Also on visibility change
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') setCurrentDateTime({ force: false });
+      });
+    });
+
+    async function saveRecord() {
+      // ensure signature exists
+      const sigData = canvas.toDataURL();
+      const blank = document.createElement('canvas'); blank.width = canvas.width; blank.height = canvas.height;
+      const isBlank = sigData === blank.toDataURL();
+      if (isBlank) { showAlert('Firma requerida para guardar', 'warning'); return; }
+
+      const recRaw = {
+        fecha: document.getElementById('fecha').value,
+        hora: document.getElementById('hora').value,
+        placa: document.getElementById('placa').value.trim().toUpperCase(),
+        turno: document.getElementById('turno').value.trim(),
+        marca: document.getElementById('marca').value.trim(),
+        color: document.getElementById('color').value.trim(),
+        numSillas: document.getElementById('numSillas').value,
+        clase: document.getElementById('clase').value,
+        servicio: document.getElementById('servicio').value.trim(),
+        combustible: document.getElementById('combustible').value.trim(),
+        preparado: document.getElementById('preparado').value,
+        visita: document.querySelector('input[name="visita"]:checked').value,
+        pruebas: {
+          alineacion: document.getElementById('p_alineacion').checked,
+          frenos: document.getElementById('p_frenos').checked,
+          gases: document.getElementById('p_gases').checked,
+          suspension: document.getElementById('p_suspension').checked,
+          luces: document.getElementById('p_luces').checked,
+          opacidad: document.getElementById('p_opacidad').checked
+        },
+        condiciones: {},
+        cumple: document.getElementById('cumple').value,
+        timestamp: Date.now(),
+        firma: sigData
+      };
+
+      const rec = normalizeRecordForSave(recRaw);
+      const id = `record_${rec.timestamp}_${rec.placa || 'x'}`;
+      try {
+        await storageSet(id, JSON.stringify(rec));
+        showAlert(`Registro guardado: ${rec.placa || '(sin placa)'} ✅`);
+        refreshRecentList();
+        clearForm(true);
+      } catch (e) {
+        console.error(e);
+        showAlert('Error al guardar registro (revisar consola)', 'warning');
+      }
+    }
+
+    async function saveAndGoToDashboard(){
+      await saveRecord();
+      const placa = document.getElementById('placa').value.trim().toUpperCase();
+      const qs = placa ? `?placa=${encodeURIComponent(placa)}&_from_reception=1` : '';
+      window.location.href = 'cda-dashboard.html' + qs;
+    }
+
+    function clearForm(keepDate=false) {
+      if (!keepDate) {
+        setCurrentDateTime({ force: true }); // reset to now when clearing completely
+      }
+      ['placa','turno','marca','color','numSillas','servicio','combustible'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+      document.getElementById('clase').value='';
+      document.getElementById('preparado').value='';
+      document.querySelectorAll('input[name="visita"]').forEach(r=>{ if(r.value==='1') r.checked=true; });
+      document.getElementById('pruebas-section').classList.add('hidden');
+      ['p_alineacion','p_frenos','p_gases','p_suspension','p_luces','p_opacidad'].forEach(id=>{ const el = document.getElementById(id); if (el) el.checked = false; });
+      document.getElementById('cumple').value='';
+      clearSignature();
+      document.getElementById('placa-exists').textContent='';
+    }
+
+    async function refreshRecentList() {
+      const keys = await storageList();
+      const recent = [];
+      for (const k of keys.slice(-50).reverse()) {
+        try {
+          const v = await storageGet(k);
+          let parsed = v;
+          if (typeof v === 'string') {
+            try { parsed = JSON.parse(v); } catch(e){}
+          }
+          if (parsed && parsed.placa) recent.push(parsed);
+        } catch(e){}
+      }
+      const el = document.getElementById('recent-list');
+      if (recent.length === 0) { el.innerHTML = '<div class="small">No hay registros guardados.</div>'; return; }
+      el.innerHTML = recent.slice(0,8).map(r => {
+        return `<div style="margin-bottom:8px">
+          <strong>${r.placa}</strong> — ${r.marca || ''} ${r.color || ''} <span class="small" style="color:#666">(${new Date(r.timestamp||0).toLocaleString()})</span>
+        </div>`;
+      }).join('');
+      const last = recent[0];
+      if (last) {
+        const lastEl = document.getElementById('last-record');
+        lastEl.classList.remove('hidden');
+        lastEl.textContent = `Últ.: ${last.placa} — ${last.marca || ''} ${last.color || ''} (${last.visita || '1'}ª)`;
+      }
+    }
+
+    async function buscarPlaca() {
+      const p = document.getElementById('placa').value.trim().toUpperCase();
+      if (!p) { showAlert('Ingrese una placa para buscar', 'info'); return; }
+      const keys = await storageList();
+      let found = null;
+      for (let i = keys.length - 1; i >= 0; i--) {
+        const k = keys[i];
+        try {
+          const v = await storageGet(k);
+          let parsed = v;
+          if (typeof v === 'string') {
+            try { parsed = JSON.parse(v); } catch(e){}
+          }
+          if (parsed && parsed.placa && parsed.placa.toUpperCase() === p) { found = parsed; break; }
+        } catch(e){}
+      }
+      const msg = document.getElementById('placa-exists');
+      if (found) {
+        msg.textContent = `❗ Placa encontrada: última visita ${found.visita || '1'} — ${found.marca || ''} ${found.color || ''} (${new Date(found.timestamp||0).toLocaleString()})`;
+        msg.style.color = '#145a3d';
+      } else {
+        msg.textContent = 'Placa no encontrada en la base cargada';
+        msg.style.color = '#b22222';
+      }
+    }
+
+    async function autocompletarDesdeUltima() {
+      const p = document.getElementById('placa').value.trim().toUpperCase();
+      if (!p) { showAlert('Ingrese placa para autocompletar', 'info'); return; }
+      const keys = await storageList();
+      let found = null;
+      for (let i = keys.length - 1; i >= 0; i--) {
+        const k = keys[i];
+        try {
+          const v = await storageGet(k);
+          let parsed = v;
+          if (typeof v === 'string') {
+            try { parsed = JSON.parse(v); } catch(e){}
+          }
+          if (parsed && parsed.placa && parsed.placa.toUpperCase() === p) { found = parsed; break; }
+        } catch(e){}
+      }
+      if (!found) { showAlert('No se encontró registro para esa placa', 'info'); return; }
+      document.getElementById('turno').value = found.turno || '';
+      document.getElementById('marca').value = found.marca || '';
+      document.getElementById('color').value = found.color || '';
+      document.getElementById('numSillas').value = found.numSillas || '';
+      document.getElementById('clase').value = found.clase || '';
+      document.getElementById('preparado').value = found.preparado || '';
+      document.querySelectorAll('input[name="visita"]').forEach(r => r.checked = r.value === (found.visita || '1'));
+      if ((found.visita || '1') === '2') document.getElementById('pruebas-section').classList.remove('hidden'); else document.getElementById('pruebas-section').classList.add('hidden');
+      const pruebas = found.pruebas || {};
+      ['alineacion','frenos','gases','suspension','luces','opacidad'].forEach(pName=>{
+        const el = document.getElementById('p_'+pName);
+        if (el) el.checked = Boolean(pruebas[pName]);
+      });
+      document.getElementById('cumple').value = found.cumple || '';
+      showAlert('Autorrellenado desde última entrada ✅', 'info');
+    }
+
+    async function populateFromLatest() {
+      const keys = await storageList();
+      for (let i = keys.length-1; i>=0; i--) {
+        try {
+          const v = await storageGet(keys[i]);
+          let parsed = v;
+          if (typeof v === 'string') {
+            try { parsed = JSON.parse(v); } catch(e){}
+          }
+          if (parsed && parsed.placa) {
+            document.getElementById('placa').value = parsed.placa || '';
+            autocompletarDesdeUltima();
+            break;
+          }
+        } catch(e){}
+      }
+    }
+
+    async function importCSV() {
+      const input = document.getElementById('csv-file');
+      if (!input.files || !input.files[0]) { showAlert('Seleccione un archivo', 'info'); return; }
+      const file = input.files[0];
+      if (typeof XLSX === 'undefined') {
+        showAlert('Falta la librería XLSX para importar (añada <script src=\"https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js\"></script>)', 'warning');
+        return;
+      }
+      try {
+        const data = await file.arrayBuffer();
+        const workbook = XLSX.read(data, { type: 'array' });
+        const sheet = workbook.SheetNames[0];
+        const rows = XLSX.utils.sheet_to_json(workbook.Sheets[sheet], { defval: '' });
+        let count = 0;
+        for (let i=0;i<rows.length;i++) {
+          const raw = rows[i];
+          const normalized = {
+            fecha: raw.Fecha || raw.fecha || raw.Date || '',
+            hora: raw.Hora || raw.hora || raw.Time || '',
+            placa: (raw.Placa || raw.placa || raw.Plate || '').toString().toUpperCase(),
+            turno: raw.Turno || raw.turno || '',
+            marca: raw.Marca || raw.marca || '',
+            color: raw.Color || raw.color || '',
+            numSillas: raw['Num Sillas'] || raw.numSillas || '',
+            clase: (raw.Clase || raw.clase || '').toLowerCase(),
+            servicio: raw.Servicio || raw.servicio || '',
+            combustible: raw.Combustible || raw.combustible || '',
+            preparado: (raw.Preparado || raw.preparado || '').toString().toLowerCase(),
+            visita: raw.Visita || raw.visita || '1',
+            pruebas: {},
+            condiciones: {},
+            cumple: raw.Cumple || raw.cumple || '',
+            timestamp: Date.now()
+          };
+          const id = `record_${normalized.timestamp}_${i}`;
+          await storageSet(id, JSON.stringify(normalized));
+          count++;
+        }
+        showAlert(`Importadas ${count} filas correctamente`, 'info');
+        refreshRecentList();
+      } catch(e){ console.error(e); showAlert('Error importando archivo (ver consola)', 'warning'); }
+    }
+
+    function exportAll() {
+      if (typeof XLSX === 'undefined') {
+        showAlert('Falta la librería XLSX para exportar (añada <script src=\"https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js\"></script>)', 'warning');
+        return;
+      }
+      storageList().then(async keys=>{
+        const rows = [];
+        for (const k of keys) {
+          try {
+            const v = await storageGet(k);
+            let parsed = v;
+            if (typeof v === 'string') {
+              try { parsed = JSON.parse(v); } catch(e){}
+            }
+            if (parsed) rows.push(parsed);
+          } catch(e){}
+        }
+        if (rows.length === 0) { showAlert('No hay registros para exportar', 'info'); return; }
+        const ws = XLSX.utils.json_to_sheet(rows);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Registros');
+        XLSX.writeFile(wb, `CDA_Registros_${new Date().toISOString().split('T')[0]}.xlsx`);
+      });
+    }
+
+    function openDashboardWithCurrent() {
+      const params = {};
+      const p = document.getElementById('placa').value.trim();
+      if (p) params.placa = p.toUpperCase();
+      const turno = document.getElementById('turno').value.trim();
+      if (turno) params.turno = turno;
+      const fecha = document.getElementById('fecha').value;
+      if (fecha) params.fechaDesde = fecha;
+      params._from_reception = '1';
+      const qs = Object.keys(params).map(k=>`${encodeURIComponent(k)}=${encodeURIComponent(params[k])}`).join('&');
+      window.location.href = 'cda-dashboard.html' + (qs ? ('?'+qs) : '');
+    }
+
+    document.getElementById('open-dashboard').addEventListener('click', function(e){
+      e.preventDefault();
+      openDashboardWithCurrent();
+    });
+  </script>
+
+  <!-- Optional: XLSX lib for import/export. Add only if needed in your deployment -->
+  <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script> -->
+</body>
+</html>
