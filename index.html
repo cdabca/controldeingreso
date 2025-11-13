@@ -279,6 +279,7 @@
             width: 22px;
             height: 22px;
             cursor: pointer;
+            flex-shrink: 0;
             accent-color: #3498db;
         }
 
@@ -327,6 +328,72 @@
             height: 20px;
             cursor: pointer;
             accent-color: #27ae60;
+        }
+
+        /* Inspección Visual con Canvas */
+        .inspeccion-visual {
+            margin-top: 20px;
+        }
+
+        .canvas-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 15px;
+        }
+
+        .canvas-wrapper {
+            background: #f8f9fa;
+            border: 3px solid #3498db;
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .canvas-wrapper h4 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .canvas-wrapper canvas {
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            cursor: crosshair;
+            background: white;
+            width: 100%;
+            max-width: 400px;
+            height: auto;
+            touch-action: none;
+        }
+
+        .drawing-tools {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .tool-btn {
+            padding: 8px 15px;
+            border: 2px solid #3498db;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .tool-btn:hover {
+            background: #3498db;
+            color: white;
+        }
+
+        .tool-btn.active {
+            background: #3498db;
+            color: white;
         }
 
         /* Tabla de presiones de neumáticos */
@@ -605,6 +672,12 @@
             border-left: 5px solid #27ae60;
         }
 
+        .alert-info {
+            background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%);
+            color: #0c5460;
+            border-left: 5px solid #17a2b8;
+        }
+
         .alert.show {
             display: flex;
             align-items: center;
@@ -717,6 +790,10 @@
             .turno-display {
                 font-size: 24px;
             }
+
+            .canvas-container {
+                grid-template-columns: 1fr;
+            }
         }
 
         @media print {
@@ -730,7 +807,7 @@
                 border-radius: 0;
             }
 
-            .btn, .firma-buttons, .action-buttons {
+            .btn, .firma-buttons, .action-buttons, .drawing-tools {
                 display: none !important;
             }
 
@@ -761,8 +838,8 @@
                 </td>
                 <td class="code-cell">
                     <div>CDABR-GST-F-04</div>
-                    <div>VER 14</div>
-                    <div>2024-04-01</div>
+                    <div>VER 15</div>
+                    <div>2024-11-13</div>
                 </td>
             </tr>
         </table>
@@ -785,7 +862,7 @@
                             <input type="time" id="hora" required>
                         </div>
                         <div class="form-group">
-                            <label>Placa *</label>
+                            <label>Placa * (Autocompletar disponible)</label>
                             <input type="text" id="placa" placeholder="ABC123" required style="text-transform: uppercase;">
                         </div>
                         <div class="form-group">
@@ -852,6 +929,7 @@
                                 <option value="camioneta">🚙 Camioneta</option>
                                 <option value="campero">🚐 Campero</option>
                                 <option value="moto">🏍️ Motocicleta</option>
+                                <option value="microbus">🚌 Microbús</option>
                                 <option value="otro">🚛 Otro</option>
                             </select>
                         </div>
@@ -928,6 +1006,17 @@
                             </div>
                         </div>
                     </div>
+
+                    <div class="datos-grid" style="margin-top: 15px;">
+                        <div class="form-group">
+                            <label>Cliente</label>
+                            <input type="text" id="cliente" placeholder="Nombre del propietario">
+                        </div>
+                        <div class="form-group">
+                            <label>Cédula</label>
+                            <input type="text" id="cedula" placeholder="Número de documento">
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -992,7 +1081,24 @@
                 </div>
             </div>
 
-            <!-- Sección 5: Presión de Neumáticos -->
+            <!-- Sección 5: Inspección Visual de Daños -->
+            <div class="section">
+                <div class="section-title">🔍 INSPECCIÓN VISUAL - REGISTRO DE DAÑOS</div>
+                <div class="section-content">
+                    <div class="drawing-tools">
+                        <button class="tool-btn active" onclick="setDrawingTool('point')">🔴 Golpe</button>
+                        <button class="tool-btn" onclick="setDrawingTool('line')">📏 Rayón</button>
+                        <button class="tool-btn" onclick="setDrawingTool('circle')">⭕ Área Dañada</button>
+                        <button class="tool-btn btn-limpiar" onclick="clearAllInspectionCanvas()">🗑️ Limpiar Todo</button>
+                    </div>
+
+                    <div class="canvas-container" id="inspection-canvas-container">
+                        <!-- Se llenarán dinámicamente según tipo de vehículo -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sección 6: Presión de Neumáticos -->
             <div class="section">
                 <div class="section-title">🔧 PRESIÓN DE INFLADO DE NEUMÁTICOS</div>
                 <div class="section-content">
@@ -1006,36 +1112,7 @@
                             </tr>
                         </thead>
                         <tbody id="presiones-tbody">
-                            <tr>
-                                <td class="label-cell">🔵 DI - Delantera Izquierda</td>
-                                <td><input type="number" id="presion-di-inicial" step="0.5" placeholder="32" min="0"></td>
-                                <td><input type="number" id="presion-di-ajustada" step="0.5" placeholder="32" min="0"></td>
-                                <td><input type="checkbox" id="na-di" onchange="togglePresion('di')"></td>
-                            </tr>
-                            <tr>
-                                <td class="label-cell">🔵 DD - Delantera Derecha</td>
-                                <td><input type="number" id="presion-dd-inicial" step="0.5" placeholder="32" min="0"></td>
-                                <td><input type="number" id="presion-dd-ajustada" step="0.5" placeholder="32" min="0"></td>
-                                <td><input type="checkbox" id="na-dd" onchange="togglePresion('dd')"></td>
-                            </tr>
-                            <tr>
-                                <td class="label-cell">🔴 TI - Trasera Izquierda</td>
-                                <td><input type="number" id="presion-ti-inicial" step="0.5" placeholder="32" min="0"></td>
-                                <td><input type="number" id="presion-ti-ajustada" step="0.5" placeholder="32" min="0"></td>
-                                <td><input type="checkbox" id="na-ti" onchange="togglePresion('ti')"></td>
-                            </tr>
-                            <tr>
-                                <td class="label-cell">🔴 TD - Trasera Derecha</td>
-                                <td><input type="number" id="presion-td-inicial" step="0.5" placeholder="32" min="0"></td>
-                                <td><input type="number" id="presion-td-ajustada" step="0.5" placeholder="32" min="0"></td>
-                                <td><input type="checkbox" id="na-td" onchange="togglePresion('td')"></td>
-                            </tr>
-                            <tr>
-                                <td class="label-cell">⚪ R - Repuesto</td>
-                                <td><input type="number" id="presion-r-inicial" step="0.5" placeholder="32" min="0"></td>
-                                <td><input type="number" id="presion-r-ajustada" step="0.5" placeholder="32" min="0"></td>
-                                <td><input type="checkbox" id="na-r" onchange="togglePresion('r')"></td>
-                            </tr>
+                            <!-- Se llenará dinámicamente según tipo de vehículo -->
                         </tbody>
                     </table>
                 </div>
@@ -1052,7 +1129,7 @@
                 </div>
             </div>
 
-            <!-- Sección 6: Condiciones y Firma -->
+            <!-- Sección 7: Condiciones y Firma -->
             <div class="condiciones-section">
                 <div class="condiciones-titulo">
                     ✍️ ACEPTACIÓN DE CONDICIONES Y FIRMA
@@ -1112,10 +1189,24 @@
     </div>
 
     <script>
-        // CSV data arrays
-        let marcasData = [], coloresData = [], carroceriasData = [];
+        // ========== CONFIGURACIÓN SUPABASE ==========
+        // INSTRUCCIONES: Después de crear tu proyecto en Supabase:
+        // 1. Ve a Project Settings > API
+        // 2. Copia tu Project URL y anon/public key
+        // 3. Descomenta y reemplaza estas líneas:
+        
+        // const SUPABASE_URL = 'TU_URL_AQUI'; // ejemplo: https://abc123.supabase.co
+        // const SUPABASE_KEY = 'TU_KEY_AQUI';
+        
+        // Para activar Supabase, cambia esta línea a true:
+        const USE_SUPABASE = false;
 
-        // Raw URLs (repo: cdabca/controldeingreso main branch)
+        // ========== VARIABLES GLOBALES ==========
+        let marcasData = [], coloresData = [], carroceriasData = [];
+        let currentDrawingTool = 'point';
+        let inspectionCanvases = {};
+
+        // URLs CSV (GitHub)
         const RAW_BASE = 'https://raw.githubusercontent.com/cdabca/controldeingreso/main/';
         const URLS = {
             marcas: RAW_BASE + 'marca.csv',
@@ -1151,11 +1242,126 @@
             { texto: "Espejos retrovisores en buen estado", defecto: "si" }
         ];
 
-        // ---------- CSV loader and robust parser ----------
+        // ========== FUNCIONES SUPABASE ==========
+        async function initSupabase() {
+            if (!USE_SUPABASE) return null;
+            
+            // Importar Supabase client (se carga desde CDN en producción)
+            // <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+            if (typeof supabase === 'undefined') {
+                console.warn('Supabase no está cargado. Agregue el script CDN al HTML.');
+                return null;
+            }
+            
+            return supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        }
+
+        async function cargarVehiculoDesdeBD(placa) {
+            if (!USE_SUPABASE) return cargarVehiculoDesdeLocalStorage(placa);
+            
+            try {
+                const client = await initSupabase();
+                if (!client) return cargarVehiculoDesdeLocalStorage(placa);
+                
+                const { data, error } = await client
+                    .from('vehiculos')
+                    .select('*')
+                    .eq('placa', placa.toUpperCase())
+                    .order('created_at', { ascending: false })
+                    .limit(1)
+                    .single();
+                
+                if (error) throw error;
+                return data;
+            } catch (err) {
+                console.warn('Error cargando desde Supabase, usando localStorage:', err);
+                return cargarVehiculoDesdeLocalStorage(placa);
+            }
+        }
+
+        async function guardarVehiculoEnBD(data) {
+            // Guardar en localStorage siempre
+            guardarVehiculoEnLocalStorage(data);
+            
+            if (!USE_SUPABASE) return;
+            
+            try {
+                const client = await initSupabase();
+                if (!client) return;
+                
+                const { error } = await client
+                    .from('vehiculos')
+                    .insert([{
+                        placa: data.placa,
+                        marca: data.marca,
+                        clase: data.claseVehiculo,
+                        servicio: data.tipoServicio,
+                        combustible: data.tipoCombustible,
+                        carroceria: data.tipoCarroceria,
+                        cliente: data.cliente || '',
+                        cedula: data.cedula || '',
+                        datos_completos: data
+                    }]);
+                
+                if (error) throw error;
+                console.log('✅ Guardado en Supabase exitosamente');
+            } catch (err) {
+                console.error('Error guardando en Supabase:', err);
+            }
+        }
+
+        // ========== FUNCIONES LOCALSTORAGE ==========
+        function cargarVehiculoDesdeLocalStorage(placa) {
+            const registros = JSON.parse(localStorage.getItem('vehiculos-cda') || '[]');
+            return registros.find(v => v.placa.toUpperCase() === placa.toUpperCase());
+        }
+
+        function guardarVehiculoEnLocalStorage(data) {
+            let registros = JSON.parse(localStorage.getItem('vehiculos-cda') || '[]');
+            const index = registros.findIndex(v => v.placa === data.placa);
+            
+            if (index >= 0) {
+                registros[index] = data;
+            } else {
+                registros.push(data);
+            }
+            
+            // Mantener solo últimos 500 registros
+            if (registros.length > 500) {
+                registros = registros.slice(-500);
+            }
+            
+            localStorage.setItem('vehiculos-cda', JSON.stringify(registros));
+        }
+
+        // ========== AUTOCOMPLETAR POR PLACA ==========
+        async function autocompletarPorPlaca(placa) {
+            if (!placa || placa.length < 3) return;
+            
+            const vehiculo = await cargarVehiculoDesdeBD(placa);
+            
+            if (vehiculo) {
+                // Rellenar campos
+                document.getElementById('marca').value = vehiculo.marca || '';
+                document.getElementById('color').value = vehiculo.color || '';
+                document.getElementById('clase-vehiculo').value = vehiculo.claseVehiculo || vehiculo.clase || '';
+                document.getElementById('tipo-servicio').value = vehiculo.tipoServicio || vehiculo.servicio || '';
+                document.getElementById('tipo-combustible').value = vehiculo.tipoCombustible || vehiculo.combustible || '';
+                document.getElementById('carroceria').value = vehiculo.tipoCarroceria || vehiculo.carroceria || '';
+                document.getElementById('cliente').value = vehiculo.cliente || '';
+                document.getElementById('cedula').value = vehiculo.cedula || '';
+                
+                // Actualizar campos dinámicos
+                updateDynamicFields();
+                
+                showAlert('✅ Datos del vehículo cargados automáticamente', 'success');
+            }
+        }
+
+        // ========== CSV LOADER ==========
         async function cargarDatosCSV() {
             const statusContainer = document.getElementById('alert-container');
-            // show temporary status
-            statusContainer.innerHTML = '<div class="alert alert-info show">Cargando datos de autocompletado... (si prueba local use servidor)</div>';
+            statusContainer.innerHTML = '<div class="alert alert-info show">Cargando datos de autocompletado...</div>';
 
             try {
                 const [rMar, rCol, rCar] = await Promise.all([
@@ -1165,9 +1371,8 @@
                 ]);
 
                 if (!rMar.ok || !rCol.ok || !rCar.ok) {
-                    const msg = `Error cargando CSV: ${rMar.status} ${rCol.status} ${rCar.status}`;
+                    const msg = `Error cargando CSV`;
                     statusContainer.innerHTML = `<div class="alert alert-error show">❌ ${msg}</div>`;
-                    console.error(msg);
                     return;
                 }
 
@@ -1177,78 +1382,65 @@
                 coloresData = robustParseCSV(tCol);
                 carroceriasData = robustParseCSV(tCar);
 
-                statusContainer.innerHTML = `<div class="alert alert-success show">✅ Autocompletado cargado (marcas: ${marcasData.length}, colores: ${coloresData.length}, carrocerías: ${carroceriasData.length})</div>`;
-                console.log('CSV cargados:', {marcas: marcasData.length, colores: coloresData.length, carrocerias: carroceriasData.length});
+                statusContainer.innerHTML = `<div class="alert alert-success show">✅ Autocompletado cargado</div>`;
             } catch (err) {
                 console.error('Error cargarDatosCSV', err);
-                statusContainer.innerHTML = `<div class="alert alert-error show">❌ Error al cargar CSV: ${err.message || err}</div>`;
+                statusContainer.innerHTML = `<div class="alert alert-error show">❌ Error: ${err.message}</div>`;
             } finally {
-                setTimeout(()=>{ // hide after a bit
-                    document.getElementById('alert-container').innerHTML = '';
-                }, 3000);
+                setTimeout(() => { document.getElementById('alert-container').innerHTML = ''; }, 3000);
             }
         }
 
         function robustParseCSV(texto) {
             if (!texto) return [];
-            // normalize newlines and remove BOMs
-            texto = texto.replace(/^\uFEFF/, '').replace(/^\ufeff/, '').replace(/\r/g, '\n');
-            const lines = texto.split('\n').map(l => l.replace(/\uFEFF/g, '').trim()).filter(Boolean);
+            texto = texto.replace(/^\uFEFF/, '').replace(/\r/g, '\n');
+            const lines = texto.split('\n').map(l => l.trim()).filter(Boolean);
             const results = [];
 
             for (let line of lines) {
-                // remove invisible unicode markers
                 line = line.replace(/[\u200B-\u200F\uFEFF]/g, '').trim();
                 if (!line) continue;
 
-                // Remove leading numeric index + delimiter (e.g., "1|" or "1| " or "1;")
                 line = line.replace(/^\s*\d+\s*[\|\;\,]\s*/, '');
-                // If still contains a leading numeric and space, remove "1 "
                 line = line.replace(/^\s*\d+\s+/, '');
 
-                // If there's a pipe, take everything after first pipe (common format in provided CSVs)
                 if (line.includes('|')) {
                     const afterPipe = line.split('|').slice(1).join('|').trim();
                     if (afterPipe) line = afterPipe;
                 }
 
-                // If multiple columns separated by ; or , take first meaningful column
                 if (line.includes(';')) line = line.split(';')[0];
                 else if (line.includes(',')) line = line.split(',')[0];
 
-                // Trim quotes and stray semicolons
-                let valor = line.replace(/^"+|"+$/g, '').replace(/;+$/g,'').trim();
+                let valor = line.replace(/^"+|"+$/g, '').replace(/;+$/g, '').trim();
                 valor = valor.replace(/[\u200B-\u200F\uFEFF]/g, '').trim();
 
                 if (!valor) continue;
 
-                // Ignore header words
                 const up = valor.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-                if (['MARCA','COLOR','CARROCERIA','CARROCERÍA','CARROCERIA'].includes(up)) continue;
+                if (['MARCA', 'COLOR', 'CARROCERIA', 'CARROCERÍA'].includes(up)) continue;
 
                 results.push(valor);
             }
 
-            // Unique and stable sorting (locale aware)
             const uniq = Array.from(new Set(results.map(s => s.trim()).filter(Boolean)));
-            return uniq.sort((a,b) => a.localeCompare(b, 'es', {sensitivity:'base'}));
+            return uniq.sort((a, b) => a.localeCompare(b, 'es', { sensitivity: 'base' }));
         }
 
-        // ---------- Autocomplete ----------
+        // ========== AUTOCOMPLETE ==========
         function setupAutocomplete(inputEl, sourceArray, maxResults = 80) {
             if (!inputEl) return;
-            inputEl.addEventListener('input', function() {
+            inputEl.addEventListener('input', function () {
                 closeAllLists();
                 const val = this.value;
                 if (!val) return;
                 const container = document.createElement('div');
-                container.setAttribute('class','autocomplete-items');
+                container.setAttribute('class', 'autocomplete-items');
                 this.parentNode.appendChild(container);
 
                 const q = val.trim().toUpperCase();
                 if (!q) return;
 
-                // prioritize startsWith then includes
                 const starts = [], contains = [];
                 for (const item of sourceArray) {
                     const u = item.toUpperCase();
@@ -1266,11 +1458,11 @@
                     const div = document.createElement('div');
                     const idx = m.toUpperCase().indexOf(q);
                     if (idx >= 0) {
-                        div.innerHTML = m.substr(0,idx) + '<strong>' + m.substr(idx, q.length) + '</strong>' + m.substr(idx + q.length);
+                        div.innerHTML = m.substr(0, idx) + '<strong>' + m.substr(idx, q.length) + '</strong>' + m.substr(idx + q.length);
                     } else div.textContent = m;
                     const hidden = document.createElement('input'); hidden.type = 'hidden'; hidden.value = m;
                     div.appendChild(hidden);
-                    div.addEventListener('click', function() {
+                    div.addEventListener('click', function () {
                         inputEl.value = this.getElementsByTagName('input')[0].value;
                         closeAllLists();
                         inputEl.dispatchEvent(new Event('change'));
@@ -1279,16 +1471,16 @@
                 });
             });
 
-            inputEl.addEventListener('keydown', function(e) {
+            inputEl.addEventListener('keydown', function (e) {
                 let x = this.parentNode.querySelector('.autocomplete-items');
                 if (!x) return;
                 x = x.getElementsByTagName('div');
                 if (!x.length) return;
                 let current = -1;
-                for (let i=0;i<x.length;i++) if (x[i].classList.contains('autocomplete-active')) current = i;
+                for (let i = 0; i < x.length; i++) if (x[i].classList.contains('autocomplete-active')) current = i;
                 if (e.key === 'ArrowDown') {
-                    if (current < x.length-1) {
-                        if (current >=0) x[current].classList.remove('autocomplete-active');
+                    if (current < x.length - 1) {
+                        if (current >= 0) x[current].classList.remove('autocomplete-active');
                         x[++current].classList.add('autocomplete-active');
                     }
                     e.preventDefault();
@@ -1306,22 +1498,28 @@
 
             function closeAllLists(el) {
                 const items = document.getElementsByClassName('autocomplete-items');
-                for (let i=0;i<items.length;i++) {
+                for (let i = 0; i < items.length; i++) {
                     if (el !== items[i] && el !== inputEl) {
                         if (items[i].parentNode) items[i].parentNode.removeChild(items[i]);
                     }
                 }
             }
-            document.addEventListener('click', function(e){ closeAllLists(e.target); });
+            document.addEventListener('click', function (e) { closeAllLists(e.target); });
         }
 
-        // ---------- Dynamic inspection table ----------
+        // ========== DYNAMIC FIELDS ==========
         function updateDynamicFields() {
             const claseVehiculo = document.getElementById('clase-vehiculo').value;
+            updateInspectionTable(claseVehiculo);
+            updatePresionesTable(claseVehiculo);
+            updateInspectionCanvas(claseVehiculo);
+        }
+
+        function updateInspectionTable(claseVehiculo) {
             const tabla = document.getElementById('tabla-inspeccion');
 
             if (!claseVehiculo) {
-                tabla.innerHTML = '<tr><td style="text-align: center; padding: 20px; color: #999;">Seleccione una clase de vehículo para mostrar la lista de preparación</td></tr>';
+                tabla.innerHTML = '<tr><td style="text-align: center; padding: 20px; color: #999;">Seleccione una clase de vehículo</td></tr>';
                 return;
             }
 
@@ -1355,40 +1553,250 @@
             tabla.innerHTML = html;
         }
 
-        // ---------- Presión toggle ----------
+        function updatePresionesTable(claseVehiculo) {
+            const tbody = document.getElementById('presiones-tbody');
+            
+            if (claseVehiculo === 'moto') {
+                // Solo 2 llantas para motos
+                tbody.innerHTML = `
+                    <tr>
+                        <td class="label-cell">🔵 Delantera</td>
+                        <td><input type="number" id="presion-delantera-inicial" step="0.5" placeholder="32" min="0"></td>
+                        <td><input type="number" id="presion-delantera-ajustada" step="0.5" placeholder="32" min="0"></td>
+                        <td><input type="checkbox" id="na-delantera" onchange="togglePresion('delantera')"></td>
+                    </tr>
+                    <tr>
+                        <td class="label-cell">🔴 Trasera</td>
+                        <td><input type="number" id="presion-trasera-inicial" step="0.5" placeholder="32" min="0"></td>
+                        <td><input type="number" id="presion-trasera-ajustada" step="0.5" placeholder="32" min="0"></td>
+                        <td><input type="checkbox" id="na-trasera" onchange="togglePresion('trasera')"></td>
+                    </tr>
+                `;
+            } else {
+                // 5 llantas para vehículos
+                tbody.innerHTML = `
+                    <tr>
+                        <td class="label-cell">🔵 DI - Delantera Izquierda</td>
+                        <td><input type="number" id="presion-di-inicial" step="0.5" placeholder="32" min="0"></td>
+                        <td><input type="number" id="presion-di-ajustada" step="0.5" placeholder="32" min="0"></td>
+                        <td><input type="checkbox" id="na-di" onchange="togglePresion('di')"></td>
+                    </tr>
+                    <tr>
+                        <td class="label-cell">🔵 DD - Delantera Derecha</td>
+                        <td><input type="number" id="presion-dd-inicial" step="0.5" placeholder="32" min="0"></td>
+                        <td><input type="number" id="presion-dd-ajustada" step="0.5" placeholder="32" min="0"></td>
+                        <td><input type="checkbox" id="na-dd" onchange="togglePresion('dd')"></td>
+                    </tr>
+                    <tr>
+                        <td class="label-cell">🔴 TI - Trasera Izquierda</td>
+                        <td><input type="number" id="presion-ti-inicial" step="0.5" placeholder="32" min="0"></td>
+                        <td><input type="number" id="presion-ti-ajustada" step="0.5" placeholder="32" min="0"></td>
+                        <td><input type="checkbox" id="na-ti" onchange="togglePresion('ti')"></td>
+                    </tr>
+                    <tr>
+                        <td class="label-cell">🔴 TD - Trasera Derecha</td>
+                        <td><input type="number" id="presion-td-inicial" step="0.5" placeholder="32" min="0"></td>
+                        <td><input type="number" id="presion-td-ajustada" step="0.5" placeholder="32" min="0"></td>
+                        <td><input type="checkbox" id="na-td" onchange="togglePresion('td')"></td>
+                    </tr>
+                    <tr>
+                        <td class="label-cell">⚪ R - Repuesto</td>
+                        <td><input type="number" id="presion-r-inicial" step="0.5" placeholder="32" min="0"></td>
+                        <td><input type="number" id="presion-r-ajustada" step="0.5" placeholder="32" min="0"></td>
+                        <td><input type="checkbox" id="na-r" onchange="togglePresion('r')"></td>
+                    </tr>
+                `;
+            }
+        }
+
         function togglePresion(posicion) {
             const checkbox = document.getElementById(`na-${posicion}`);
             const inputInicial = document.getElementById(`presion-${posicion}-inicial`);
             const inputAjustada = document.getElementById(`presion-${posicion}-ajustada`);
 
-            if (checkbox.checked) {
-                inputInicial.disabled = true;
-                inputAjustada.disabled = true;
-                inputInicial.value = '';
-                inputAjustada.value = '';
-                inputInicial.style.background = '#e9ecef';
-                inputAjustada.style.background = '#e9ecef';
-            } else {
-                inputInicial.disabled = false;
-                inputAjustada.disabled = false;
-                inputInicial.style.background = '';
-                inputAjustada.style.background = '';
+            if (checkbox && inputInicial && inputAjustada) {
+                if (checkbox.checked) {
+                    inputInicial.disabled = true;
+                    inputAjustada.disabled = true;
+                    inputInicial.value = '';
+                    inputAjustada.value = '';
+                    inputInicial.style.background = '#e9ecef';
+                    inputAjustada.style.background = '#e9ecef';
+                } else {
+                    inputInicial.disabled = false;
+                    inputAjustada.disabled = false;
+                    inputInicial.style.background = '';
+                    inputAjustada.style.background = '';
+                }
             }
         }
 
-        // ---------- Signature canvas ----------
+        // ========== INSPECTION CANVAS (SVG Drawings) ==========
+        function updateInspectionCanvas(claseVehiculo) {
+            const container = document.getElementById('inspection-canvas-container');
+            container.innerHTML = '';
+            inspectionCanvases = {};
+
+            if (!claseVehiculo) return;
+
+            const views = claseVehiculo === 'moto' 
+                ? [{ id: 'lateral', title: 'Vista Lateral' }, { id: 'superior', title: 'Vista Superior' }]
+                : [{ id: 'frontal', title: 'Vista Frontal' }, { id: 'lateral', title: 'Vista Lateral' }, 
+                   { id: 'trasera', title: 'Vista Trasera' }, { id: 'superior', title: 'Vista Superior' }];
+
+            views.forEach(view => {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'canvas-wrapper';
+                wrapper.innerHTML = `
+                    <h4>${view.title}</h4>
+                    <canvas id="canvas-${view.id}" width="400" height="300"></canvas>
+                `;
+                container.appendChild(wrapper);
+
+                const canvas = document.getElementById(`canvas-${view.id}`);
+                const ctx = canvas.getContext('2d');
+                
+                // Dibujar vehículo de fondo
+                drawVehicleShape(ctx, claseVehiculo, view.id, canvas.width, canvas.height);
+                
+                // Setup interaction
+                setupCanvasDrawing(canvas, ctx);
+                inspectionCanvases[view.id] = canvas;
+            });
+        }
+
+        function drawVehicleShape(ctx, tipo, vista, w, h) {
+            ctx.fillStyle = '#f0f0f0';
+            ctx.strokeStyle = '#666';
+            ctx.lineWidth = 2;
+
+            if (tipo === 'moto') {
+                if (vista === 'lateral') {
+                    // Moto lateral simplificada
+                    ctx.beginPath();
+                    ctx.ellipse(w * 0.3, h * 0.7, 40, 40, 0, 0, Math.PI * 2);
+                    ctx.ellipse(w * 0.7, h * 0.7, 40, 40, 0, 0, Math.PI * 2);
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.moveTo(w * 0.3, h * 0.7);
+                    ctx.lineTo(w * 0.5, h * 0.3);
+                    ctx.lineTo(w * 0.7, h * 0.7);
+                    ctx.stroke();
+                } else {
+                    // Moto superior
+                    ctx.fillRect(w * 0.35, h * 0.2, w * 0.3, h * 0.6);
+                    ctx.strokeRect(w * 0.35, h * 0.2, w * 0.3, h * 0.6);
+                }
+            } else {
+                if (vista === 'frontal') {
+                    ctx.fillRect(w * 0.2, h * 0.3, w * 0.6, h * 0.5);
+                    ctx.strokeRect(w * 0.2, h * 0.3, w * 0.6, h * 0.5);
+                } else if (vista === 'lateral') {
+                    ctx.fillRect(w * 0.1, h * 0.3, w * 0.8, h * 0.4);
+                    ctx.strokeRect(w * 0.1, h * 0.3, w * 0.8, h * 0.4);
+                } else if (vista === 'trasera') {
+                    ctx.fillRect(w * 0.2, h * 0.3, w * 0.6, h * 0.5);
+                    ctx.strokeRect(w * 0.2, h * 0.3, w * 0.6, h * 0.5);
+                } else {
+                    ctx.fillRect(w * 0.15, h * 0.2, w * 0.7, h * 0.6);
+                    ctx.strokeRect(w * 0.15, h * 0.2, w * 0.7, h * 0.6);
+                }
+            }
+        }
+
+        function setupCanvasDrawing(canvas, ctx) {
+            let drawing = false;
+            let startX, startY;
+
+            function getPos(e) {
+                const rect = canvas.getBoundingClientRect();
+                const touch = e.touches ? e.touches[0] : null;
+                return {
+                    x: (touch ? touch.clientX : e.clientX) - rect.left,
+                    y: (touch ? touch.clientY : e.clientY) - rect.top
+                };
+            }
+
+            function startDraw(e) {
+                const pos = getPos(e);
+                startX = pos.x;
+                startY = pos.y;
+                drawing = true;
+                e.preventDefault();
+            }
+
+            function draw(e) {
+                if (!drawing) return;
+                e.preventDefault();
+                const pos = getPos(e);
+
+                if (currentDrawingTool === 'point') {
+                    ctx.fillStyle = 'red';
+                    ctx.beginPath();
+                    ctx.arc(pos.x, pos.y, 5, 0, Math.PI * 2);
+                    ctx.fill();
+                } else if (currentDrawingTool === 'line') {
+                    ctx.strokeStyle = 'blue';
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    ctx.moveTo(startX, startY);
+                    ctx.lineTo(pos.x, pos.y);
+                    ctx.stroke();
+                    startX = pos.x;
+                    startY = pos.y;
+                }
+            }
+
+            function endDraw(e) {
+                if (!drawing) return;
+                drawing = false;
+                const pos = getPos(e);
+
+                if (currentDrawingTool === 'circle') {
+                    const radius = Math.sqrt(Math.pow(pos.x - startX, 2) + Math.pow(pos.y - startY, 2));
+                    ctx.strokeStyle = 'orange';
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    ctx.arc(startX, startY, radius, 0, Math.PI * 2);
+                    ctx.stroke();
+                }
+            }
+
+            canvas.addEventListener('mousedown', startDraw);
+            canvas.addEventListener('mousemove', draw);
+            canvas.addEventListener('mouseup', endDraw);
+            canvas.addEventListener('touchstart', startDraw);
+            canvas.addEventListener('touchmove', draw);
+            canvas.addEventListener('touchend', endDraw);
+        }
+
+        function setDrawingTool(tool) {
+            currentDrawingTool = tool;
+            document.querySelectorAll('.tool-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+        }
+
+        function clearAllInspectionCanvas() {
+            Object.values(inspectionCanvases).forEach(canvas => {
+                const ctx = canvas.getContext('2d');
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                const claseVehiculo = document.getElementById('clase-vehiculo').value;
+                const viewId = canvas.id.replace('canvas-', '');
+                drawVehicleShape(ctx, claseVehiculo, viewId, canvas.width, canvas.height);
+            });
+        }
+
+        // ========== SIGNATURE PAD ==========
         function setupSignaturePad() {
             const canvas = document.getElementById('signature-pad');
             if (!canvas) return;
             const ctx = canvas.getContext('2d');
 
-            // set size
             canvas.width = canvas.offsetWidth;
             canvas.height = 200;
 
             let drawing = false;
-            let lastX = 0;
-            let lastY = 0;
+            let lastX = 0, lastY = 0;
 
             function startDrawing(e) {
                 drawing = true;
@@ -1426,7 +1834,6 @@
             canvas.addEventListener('mousemove', draw);
             canvas.addEventListener('mouseup', stopDrawing);
             canvas.addEventListener('mouseout', stopDrawing);
-
             canvas.addEventListener('touchstart', startDrawing);
             canvas.addEventListener('touchmove', draw);
             canvas.addEventListener('touchend', stopDrawing);
@@ -1439,10 +1846,10 @@
             ctx.clearRect(0, 0, canvas.width, canvas.height);
         }
 
-        // ---------- Alerts / validation / collect / save / pdf ----------
+        // ========== VALIDATION & FORMS ==========
         function showAlert(message, type) {
             const container = document.getElementById('alert-container');
-            const icon = type === 'success' ? '✅' : '❌';
+            const icon = type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️';
             container.innerHTML = `<div class="alert alert-${type} show">${icon} ${message}</div>`;
             setTimeout(() => { container.innerHTML = ''; }, 5000);
         }
@@ -1488,6 +1895,7 @@
         }
 
         function collectFormData() {
+            const claseVehiculo = document.getElementById('clase-vehiculo').value;
             const data = {
                 fecha: document.getElementById('fecha').value,
                 hora: document.getElementById('hora').value,
@@ -1497,29 +1905,27 @@
                 marca: document.getElementById('marca').value,
                 color: document.getElementById('color').value,
                 numSillas: document.getElementById('num-sillas').value,
-                claseVehiculo: document.getElementById('clase-vehiculo').value,
+                claseVehiculo: claseVehiculo,
                 tipoServicio: document.getElementById('tipo-servicio').value,
                 tipoCombustible: document.getElementById('tipo-combustible').value,
                 certificadoGNV: document.getElementById('cert-gnv').value,
                 fechaVigenciaGNV: document.getElementById('fecha-vigencia-gnv').value,
-                tipoCarroceria: (document.getElementById('carroceria') ? document.getElementById('carroceria').value : '') || (document.getElementById('tipo-carroceria') ? document.getElementById('tipo-carroceria').value : ''),
+                tipoCarroceria: document.getElementById('carroceria').value,
                 blindaje: document.querySelector('input[name="blindaje"]:checked').value,
                 traccion: document.querySelector('input[name="traccion"]:checked').value,
                 codigoAlarma: document.getElementById('codigo-alarma').value,
+                cliente: document.getElementById('cliente').value,
+                cedula: document.getElementById('cedula').value,
                 pruebas: [],
                 inspeccion: [],
-                presionesNeumaticos: {
-                    DI: { inicial: document.getElementById('presion-di-inicial').value, ajustada: document.getElementById('presion-di-ajustada').value, na: document.getElementById('na-di').checked },
-                    DD: { inicial: document.getElementById('presion-dd-inicial').value, ajustada: document.getElementById('presion-dd-ajustada').value, na: document.getElementById('na-dd').checked },
-                    TI: { inicial: document.getElementById('presion-ti-inicial').value, ajustada: document.getElementById('presion-ti-ajustada').value, na: document.getElementById('na-ti').checked },
-                    TD: { inicial: document.getElementById('presion-td-inicial').value, ajustada: document.getElementById('presion-td-ajustada').value, na: document.getElementById('na-td').checked },
-                    R:  { inicial: document.getElementById('presion-r-inicial').value, ajustada: document.getElementById('presion-r-ajustada').value, na: document.getElementById('na-r').checked }
-                },
+                presionesNeumaticos: {},
+                inspeccionVisual: {},
                 condiciones: { obligatorias: [], opcionales: [] },
-                firma: (document.getElementById('signature-pad') ? document.getElementById('signature-pad').toDataURL() : ''),
+                firma: document.getElementById('signature-pad').toDataURL(),
                 timestamp: new Date().toISOString()
             };
 
+            // Pruebas mecanizadas
             if (data.visita === '2') {
                 ['alineacion', 'frenos', 'gases', 'suspension', 'luces', 'opacidad'].forEach(prueba => {
                     const checkbox = document.getElementById(`prueba-${prueba}`);
@@ -1529,17 +1935,68 @@
                 if (cumple) data.vehiculoPublicoCumple = cumple.value;
             }
 
-            const items = (data.claseVehiculo === 'moto') ? itemsInspeccionMoto : itemsInspeccionVehiculo;
+            // Inspección
+            const items = (claseVehiculo === 'moto') ? itemsInspeccionMoto : itemsInspeccionVehiculo;
             items.forEach((item, index) => {
                 const selected = document.querySelector(`input[name="insp-${index}"]:checked`);
                 if (selected) data.inspeccion.push({ descripcion: item.texto, valor: selected.value });
             });
 
+            // Presiones de neumáticos
+            if (claseVehiculo === 'moto') {
+                data.presionesNeumaticos = {
+                    delantera: {
+                        inicial: document.getElementById('presion-delantera-inicial')?.value || '',
+                        ajustada: document.getElementById('presion-delantera-ajustada')?.value || '',
+                        na: document.getElementById('na-delantera')?.checked || false
+                    },
+                    trasera: {
+                        inicial: document.getElementById('presion-trasera-inicial')?.value || '',
+                        ajustada: document.getElementById('presion-trasera-ajustada')?.value || '',
+                        na: document.getElementById('na-trasera')?.checked || false
+                    }
+                };
+            } else {
+                data.presionesNeumaticos = {
+                    DI: {
+                        inicial: document.getElementById('presion-di-inicial')?.value || '',
+                        ajustada: document.getElementById('presion-di-ajustada')?.value || '',
+                        na: document.getElementById('na-di')?.checked || false
+                    },
+                    DD: {
+                        inicial: document.getElementById('presion-dd-inicial')?.value || '',
+                        ajustada: document.getElementById('presion-dd-ajustada')?.value || '',
+                        na: document.getElementById('na-dd')?.checked || false
+                    },
+                    TI: {
+                        inicial: document.getElementById('presion-ti-inicial')?.value || '',
+                        ajustada: document.getElementById('presion-ti-ajustada')?.value || '',
+                        na: document.getElementById('na-ti')?.checked || false
+                    },
+                    TD: {
+                        inicial: document.getElementById('presion-td-inicial')?.value || '',
+                        ajustada: document.getElementById('presion-td-ajustada')?.value || '',
+                        na: document.getElementById('na-td')?.checked || false
+                    },
+                    R: {
+                        inicial: document.getElementById('presion-r-inicial')?.value || '',
+                        ajustada: document.getElementById('presion-r-ajustada')?.value || '',
+                        na: document.getElementById('na-r')?.checked || false
+                    }
+                };
+            }
+
+            // Inspección visual
+            Object.keys(inspectionCanvases).forEach(viewId => {
+                data.inspeccionVisual[viewId] = inspectionCanvases[viewId].toDataURL();
+            });
+
+            // Condiciones
             document.querySelectorAll('.check-obligatorio').forEach((check, index) => {
-                data.condiciones.obligatorias.push({ id: index+1, checked: check.checked });
+                data.condiciones.obligatorias.push({ id: index + 1, checked: check.checked });
             });
             document.querySelectorAll('.check-opcional').forEach((check, index) => {
-                data.condiciones.opcionales.push({ id: index+1, checked: check.checked });
+                data.condiciones.opcionales.push({ id: index + 1, checked: check.checked });
             });
 
             return data;
@@ -1548,16 +2005,22 @@
         function saveRecord() {
             if (!validateForm()) return;
             const data = collectFormData();
+            
+            // Guardar en BD (Supabase o localStorage)
+            guardarVehiculoEnBD(data);
+            
+            // También guardar registro completo
             const registros = JSON.parse(localStorage.getItem('registros-cda') || '[]');
             registros.push(data);
             localStorage.setItem('registros-cda', JSON.stringify(registros));
-            showAlert('Registro guardado exitosamente en el sistema', 'success');
+            
+            showAlert('✅ Registro guardado exitosamente en el sistema', 'success');
             console.log('Datos guardados:', data);
         }
 
         function generatePDF() {
             if (!validateForm()) return;
-            const buttons = document.querySelectorAll('.btn, .firma-buttons');
+            const buttons = document.querySelectorAll('.btn, .firma-buttons, .drawing-tools');
             buttons.forEach(btn => btn.style.display = 'none');
             const element = document.getElementById('printable-area');
             html2canvas(element, { scale: 2, useCORS: true, logging: false, backgroundColor: '#ffffff' }).then(canvas => {
@@ -1578,14 +2041,14 @@
                     heightLeft -= pageHeight;
                 }
                 const placa = document.getElementById('placa').value || 'NO_PLACA';
-                const fecha = document.getElementById('fecha').value || new Date().toISOString().slice(0,10);
+                const fecha = document.getElementById('fecha').value || new Date().toISOString().slice(0, 10);
                 pdf.save(`Recepcion_CDA_${placa}_${fecha}.pdf`);
                 buttons.forEach(btn => btn.style.display = '');
                 showAlert('✅ PDF generado exitosamente', 'success');
             });
         }
 
-        // Toggle pruebas mecanizadas visibility based on visita radio
+        // ========== TOGGLE SECTIONS ==========
         function togglePruebasMecanizadas() {
             const visita = document.querySelector('input[name="visita"]:checked').value;
             const pruebasSection = document.getElementById('pruebas-section');
@@ -1593,47 +2056,58 @@
             else pruebasSection.classList.add('hidden');
         }
 
-        // Toggle certificado GNV section
         function toggleCertificadoGNV() {
             const tipo = document.getElementById('tipo-combustible').value;
             const sec = document.getElementById('certificado-gnv-section');
-            if (tipo === 'gas-gasolina') sec.classList.remove('hidden'); else sec.classList.add('hidden');
+            if (tipo === 'gas-gasolina') sec.classList.remove('hidden');
+            else sec.classList.add('hidden');
         }
 
-        // ---------- Initialization: load CSVs, setup autocompletes, signature, table ----------
-        document.addEventListener('DOMContentLoaded', async function() {
+        // ========== INITIALIZATION ==========
+        document.addEventListener('DOMContentLoaded', async function () {
             const now = new Date();
             document.getElementById('fecha').valueAsDate = now;
-            document.getElementById('hora').value = now.toTimeString().slice(0,5);
+            document.getElementById('hora').value = now.toTimeString().slice(0, 5);
 
-            // cargar CSV y luego configurar autocompletes
+            // Cargar CSV
             await cargarDatosCSV();
 
+            // Setup autocompletes
             try {
-                setupAutocomplete(document.getElementById('marca'), marcasData.length ? marcasData : []);
-                setupAutocomplete(document.getElementById('color'), coloresData.length ? coloresData : []);
-                setupAutocomplete(document.getElementById('carroceria'), carroceriasData.length ? carroceriasData : []);
+                setupAutocomplete(document.getElementById('marca'), marcasData);
+                setupAutocomplete(document.getElementById('color'), coloresData);
+                setupAutocomplete(document.getElementById('carroceria'), carroceriasData);
             } catch (err) {
                 console.warn('Error inicializando autocompletes', err);
             }
 
-            // Ensure table is generated at start
-            if (!document.getElementById('clase-vehiculo').value) document.getElementById('clase-vehiculo').value = 'auto';
+            // Setup placa autocomplete
+            const placaInput = document.getElementById('placa');
+            if (placaInput) {
+                placaInput.addEventListener('input', function (e) {
+                    e.target.value = e.target.value.toUpperCase();
+                });
+                
+                placaInput.addEventListener('blur', function () {
+                    const placa = this.value.trim();
+                    if (placa.length >= 5) {
+                        autocompletarPorPlaca(placa);
+                    }
+                });
+            }
+
+            // Initial setup
+            if (!document.getElementById('clase-vehiculo').value) {
+                document.getElementById('clase-vehiculo').value = 'auto';
+            }
             updateDynamicFields();
             setupSignaturePad();
 
-            // also update dynamic fields when class changes (already set onchange but ensure listener)
+            // Event listeners
             document.getElementById('clase-vehiculo').addEventListener('change', updateDynamicFields);
-
-            // Convert placa to uppercase
-            const placaInput = document.getElementById('placa');
-            if (placaInput) placaInput.addEventListener('input', function(e) { e.target.value = e.target.value.toUpperCase(); });
-
-            // Ensure visita change toggles pruebas section
             const visitaRadios = document.querySelectorAll('input[name="visita"]');
             visitaRadios.forEach(r => r.addEventListener('change', togglePruebasMecanizadas));
         });
-
     </script>
 </body>
 </html>
