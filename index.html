@@ -1151,7 +1151,7 @@
             { texto: "Espejos retrovisores en buen estado", defecto: "si" }
         ];
 
-        // ---------- CSV loader and parser ----------
+        // ---------- CSV loader and robust parser ----------
         async function cargarDatosCSV() {
             const statusContainer = document.getElementById('alert-container');
             // show temporary status
@@ -1173,9 +1173,9 @@
 
                 const [tMar, tCol, tCar] = await Promise.all([rMar.text(), rCol.text(), rCar.text()]);
 
-                marcasData = parsearCSV(tMar);
-                coloresData = parsearCSV(tCol);
-                carroceriasData = parsearCSV(tCar);
+                marcasData = robustParseCSV(tMar);
+                coloresData = robustParseCSV(tCol);
+                carroceriasData = robustParseCSV(tCar);
 
                 statusContainer.innerHTML = `<div class="alert alert-success show">✅ Autocompletado cargado (marcas: ${marcasData.length}, colores: ${coloresData.length}, carrocerías: ${carroceriasData.length})</div>`;
                 console.log('CSV cargados:', {marcas: marcasData.length, colores: coloresData.length, carrocerias: carroceriasData.length});
@@ -1189,42 +1189,54 @@
             }
         }
 
-        function parsearCSV(texto) {
+        function robustParseCSV(texto) {
             if (!texto) return [];
-            texto = texto.replace(/\r/g,'\n');
-            const lineas = texto.split('\n').map(l => l.trim()).filter(Boolean);
-            const datos = [];
-            for (let linea of lineas) {
-                // eliminar BOM
-                linea = linea.replace(/^\uFEFF/, '').replace(/^\ufeff/, '').trim();
-                if (!linea) continue;
-                // separar por | preferiblemente, si no ;, si no ,
-                let partes = linea.split('|');
-                let valor = '';
-                if (partes.length >= 2) {
-                    valor = partes.slice(1).join('|').trim();
-                } else {
-                    partes = linea.split(';');
-                    if (partes.length >= 2) valor = partes.slice(1).join(';').trim();
-                    else {
-                        partes = linea.split(',');
-                        valor = partes.slice(1).join(',').trim();
-                    }
+            // normalize newlines and remove BOMs
+            texto = texto.replace(/^\uFEFF/, '').replace(/^\ufeff/, '').replace(/\r/g, '\n');
+            const lines = texto.split('\n').map(l => l.replace(/\uFEFF/g, '').trim()).filter(Boolean);
+            const results = [];
+
+            for (let line of lines) {
+                // remove invisible unicode markers
+                line = line.replace(/[\u200B-\u200F\uFEFF]/g, '').trim();
+                if (!line) continue;
+
+                // Remove leading numeric index + delimiter (e.g., "1|" or "1| " or "1;")
+                line = line.replace(/^\s*\d+\s*[\|\;\,]\s*/, '');
+                // If still contains a leading numeric and space, remove "1 "
+                line = line.replace(/^\s*\d+\s+/, '');
+
+                // If there's a pipe, take everything after first pipe (common format in provided CSVs)
+                if (line.includes('|')) {
+                    const afterPipe = line.split('|').slice(1).join('|').trim();
+                    if (afterPipe) line = afterPipe;
                 }
-                // limpiar ; finales y comillas
-                valor = valor.replace(/;+$/,'').replace(/^"+|"+$/g,'').trim();
+
+                // If multiple columns separated by ; or , take first meaningful column
+                if (line.includes(';')) line = line.split(';')[0];
+                else if (line.includes(',')) line = line.split(',')[0];
+
+                // Trim quotes and stray semicolons
+                let valor = line.replace(/^"+|"+$/g, '').replace(/;+$/g,'').trim();
+                valor = valor.replace(/[\u200B-\u200F\uFEFF]/g, '').trim();
+
                 if (!valor) continue;
-                const up = valor.toUpperCase();
-                if (up === 'MARCA' || up === 'COLOR' || up === 'CARROCERIA' || up === 'CARROCERÍA') continue;
-                datos.push(valor);
+
+                // Ignore header words
+                const up = valor.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+                if (['MARCA','COLOR','CARROCERIA','CARROCERÍA','CARROCERIA'].includes(up)) continue;
+
+                results.push(valor);
             }
-            // uniq and trim
-            const uniq = Array.from(new Set(datos.map(s=>s.trim()).filter(Boolean)));
-            return uniq;
+
+            // Unique and stable sorting (locale aware)
+            const uniq = Array.from(new Set(results.map(s => s.trim()).filter(Boolean)));
+            return uniq.sort((a,b) => a.localeCompare(b, 'es', {sensitivity:'base'}));
         }
 
         // ---------- Autocomplete ----------
         function setupAutocomplete(inputEl, sourceArray, maxResults = 80) {
+            if (!inputEl) return;
             inputEl.addEventListener('input', function() {
                 closeAllLists();
                 const val = this.value;
@@ -1367,6 +1379,7 @@
         // ---------- Signature canvas ----------
         function setupSignaturePad() {
             const canvas = document.getElementById('signature-pad');
+            if (!canvas) return;
             const ctx = canvas.getContext('2d');
 
             // set size
@@ -1421,11 +1434,12 @@
 
         function clearSignature() {
             const canvas = document.getElementById('signature-pad');
+            if (!canvas) return;
             const ctx = canvas.getContext('2d');
             ctx.clearRect(0, 0, canvas.width, canvas.height);
         }
 
-        // ---------- Alerts / validation / collect / save / pdf (unchanged logic) ----------
+        // ---------- Alerts / validation / collect / save / pdf ----------
         function showAlert(message, type) {
             const container = document.getElementById('alert-container');
             const icon = type === 'success' ? '✅' : '❌';
@@ -1464,6 +1478,7 @@
             }
 
             const canvas = document.getElementById('signature-pad');
+            if (!canvas) { showAlert('Falta canvas de firma', 'error'); return false; }
             const ctx = canvas.getContext('2d');
             const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
             const isEmpty = !imageData.data.some(channel => channel !== 0);
@@ -1487,7 +1502,7 @@
                 tipoCombustible: document.getElementById('tipo-combustible').value,
                 certificadoGNV: document.getElementById('cert-gnv').value,
                 fechaVigenciaGNV: document.getElementById('fecha-vigencia-gnv').value,
-                tipoCarroceria: document.getElementById('carroceria').value || document.getElementById('tipo-carroceria').value,
+                tipoCarroceria: (document.getElementById('carroceria') ? document.getElementById('carroceria').value : '') || (document.getElementById('tipo-carroceria') ? document.getElementById('tipo-carroceria').value : ''),
                 blindaje: document.querySelector('input[name="blindaje"]:checked').value,
                 traccion: document.querySelector('input[name="traccion"]:checked').value,
                 codigoAlarma: document.getElementById('codigo-alarma').value,
@@ -1501,7 +1516,7 @@
                     R:  { inicial: document.getElementById('presion-r-inicial').value, ajustada: document.getElementById('presion-r-ajustada').value, na: document.getElementById('na-r').checked }
                 },
                 condiciones: { obligatorias: [], opcionales: [] },
-                firma: document.getElementById('signature-pad').toDataURL(),
+                firma: (document.getElementById('signature-pad') ? document.getElementById('signature-pad').toDataURL() : ''),
                 timestamp: new Date().toISOString()
             };
 
@@ -1570,6 +1585,21 @@
             });
         }
 
+        // Toggle pruebas mecanizadas visibility based on visita radio
+        function togglePruebasMecanizadas() {
+            const visita = document.querySelector('input[name="visita"]:checked').value;
+            const pruebasSection = document.getElementById('pruebas-section');
+            if (visita === '2') pruebasSection.classList.remove('hidden');
+            else pruebasSection.classList.add('hidden');
+        }
+
+        // Toggle certificado GNV section
+        function toggleCertificadoGNV() {
+            const tipo = document.getElementById('tipo-combustible').value;
+            const sec = document.getElementById('certificado-gnv-section');
+            if (tipo === 'gas-gasolina') sec.classList.remove('hidden'); else sec.classList.add('hidden');
+        }
+
         // ---------- Initialization: load CSVs, setup autocompletes, signature, table ----------
         document.addEventListener('DOMContentLoaded', async function() {
             const now = new Date();
@@ -1594,10 +1624,15 @@
 
             // also update dynamic fields when class changes (already set onchange but ensure listener)
             document.getElementById('clase-vehiculo').addEventListener('change', updateDynamicFields);
-        });
 
-        // Convert placa to uppercase
-        document.getElementById('placa').addEventListener('input', function(e) { e.target.value = e.target.value.toUpperCase(); });
+            // Convert placa to uppercase
+            const placaInput = document.getElementById('placa');
+            if (placaInput) placaInput.addEventListener('input', function(e) { e.target.value = e.target.value.toUpperCase(); });
+
+            // Ensure visita change toggles pruebas section
+            const visitaRadios = document.querySelectorAll('input[name="visita"]');
+            visitaRadios.forEach(r => r.addEventListener('change', togglePruebasMecanizadas));
+        });
 
     </script>
 </body>
