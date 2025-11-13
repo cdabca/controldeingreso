@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -1189,17 +1190,10 @@
     </div>
 
     <script>
-        // ========== CONFIGURACIÓN SUPABASE ==========
-        // INSTRUCCIONES: Después de crear tu proyecto en Supabase:
-        // 1. Ve a Project Settings > API
-        // 2. Copia tu Project URL y anon/public key
-        // 3. Descomenta y reemplaza estas líneas:
-        
-        // const SUPABASE_URL = 'TU_URL_AQUI'; // ejemplo: https://abc123.supabase.co
-        // const SUPABASE_KEY = 'TU_KEY_AQUI';
-        
-        // Para activar Supabase, cambia esta línea a true:
-        const USE_SUPABASE = false;
+        const SUPABASE_URL = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndieGlncWtqbXd1b2V5dWd6eGN3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMwNDcyMjMsImV4cCI6MjA3ODYyMzIyM30.18JMTvL5zqk8VGQFh_nwhSZr5-tVv4tinH4wvGmwaAk; // TU URL REAL
+const SUPABASE_KEY = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndieGlncWtqbXd1b2V5dWd6eGN3Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2MzA0NzIyMywiZXhwIjoyMDc4NjIzMjIzfQ.5TsZ7ZJGK1deY_CwioV2DQFuhFeoc2xbW7GVr4U-D48; // TU KEY REAL
+
+const USE_SUPABASE = true; // CAMBIAR A true
 
         // ========== VARIABLES GLOBALES ==========
         let marcasData = [], coloresData = [], carroceriasData = [];
